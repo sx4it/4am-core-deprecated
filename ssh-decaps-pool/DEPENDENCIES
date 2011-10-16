@@ -1,0 +1,11 @@
+1) Install the tools to build
+On debian squeeze : build-essential python-crypto python-pip
+2) 0MQ
+- Install the software from the source or through your package manager if it is available
+Download page : http://www.zeromq.org/intro:get-the-software
+Direct download : http://download.zeromq.org/zeromq-2.1.10.tar.gz
+Untar/make install
+3) Paramiko
+- Install the lib
+Website : http://www.lag.net/paramiko/
+4) Launch

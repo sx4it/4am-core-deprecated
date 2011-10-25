@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
 import paramiko
-import json
+import json, subprocess, sys, zmq
 import os, socket, threading, base64, Queue, time
+import select
 
 PORT = 2200
+PORTLIST = range(5000, 5010) # Add 10 Controlers
+
+print PORTLIST
 
 def loadkey(key):
 	b = open(os.path.expanduser(key)).read().split()[1]
@@ -53,16 +57,30 @@ class SSHChanHandler(object):
 		self.chan.shutdown(2)
 
 class SSHCommandSession(SSHChanHandler):
+	def __init__(self, chan):
+		super(SSHCommandSession, self).__init__(chan)
+		context = zmq.Context()
+		self.sock = context.socket(zmq.REQ)
+		for port in PORTLIST:
+			self.sock.connect("tcp://127.0.0.1:" + str(port))
+		self.poll = zmq.core.poll.Poller()
+		self.poll.register(self.sock, flags=zmq.POLLIN)
 	def _validate(self, str):
-		b = json.loads(str)
-		b['result'] = True
-		b['server'] = 'is cool'
-		b['toto'] += 1
-		self.to_send.append(json.dumps(b))
+		self.sock.send(str) # forward to server via zmq
+	def __call__(self):
+		event = False
+		b = super(SSHCommandSession, self).__call__()
+		poll = self.poll.poll(timeout=0)
+		if len(poll) > 0:
+			recv = self.sock.recv()
+			self.to_send.append(recv)
+			event = True
+		return b or event
 
 class SSHShellSession(SSHChanHandler):
 	def _validate(self, str):
 		self.to_send.append("Recv >" + str + "\r\n")
+		#TODO prompt a shell for the user. and forward when ready json to server
 
 def Worker():
 	run = True
@@ -70,8 +88,6 @@ def Worker():
 	while run:
 		sleep = []
 		map(lambda b : sleep.append(b()), sessions)
-		if not True in sleep:
-			time.sleep(0.1)
 		if not queue.empty():
 			try:
 				client, host_key = queue.get()
@@ -90,9 +106,9 @@ def Worker():
 					print "no such session"
 				else:
 					if server.chan_name == 'sx4it_command':
-						sessions.append(SSHCommandSession(chan))
+						sessions.append(SSHCommandSession(chan))#.makefile()))
 					elif server.chan_name == 'session':
-						sessions.append(SSHShellSession(chan))
+						sessions.append(SSHShellSession(chan))#.makefile()))
 					else:
 						print "no such session"
 			else:
@@ -134,8 +150,12 @@ class Server(object):
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.sock.bind(('', PORT))
 		self.sock.listen(100)
-
+		self.proc = []
+	def LaunchController(self, port):
+		self.proc.append(subprocess.Popen(['./control.py', str(port)], stdout=sys.stdout, stderr=sys.stdout))
 	def run(self):
+		for port in PORTLIST:
+			self.LaunchController(port)
 		host_key = paramiko.RSAKey(filename='test_rsa.key')
 		thread = threading.Thread(target=Worker)
 		thread.deamon = True
@@ -148,6 +168,8 @@ class Server(object):
 			queue.put(None)
 			queue.join()
 			thread.join()
+			map(lambda b : b.kill(), self.proc)
+
 
 if __name__ == "__main__":
 	paramiko.util.log_to_file('demo_server.log')

@@ -19,11 +19,14 @@ class Client(object):
 		b = {}
 		b["toto"] = 1
 		b["method"] = 'hello'
-		while True:
-			c.send(json.dumps(b) + '\r')
-			b = json.loads(c.recv(2048))
-			if not b["toto"] < 42:
-				b["toto"] = 1
+		try:
+			while True:
+				c.send(json.dumps(b) + '\r')
+				b = json.loads(c.recv(2048))
+				if not b["toto"] < 4242:
+					b["toto"] = 1
+		except ValueError:
+			print "server stoped :("
 
 if __name__ == "__main__":
 	client = Client()

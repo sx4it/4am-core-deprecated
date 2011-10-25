@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import paramiko
-import os, socket, threading, base64, Queue
+import json
+import os, socket, threading, base64, Queue, time
 
 PORT = 2200
 
@@ -14,27 +15,63 @@ USERS = { 'chatel_b': b, 'foo': b}
 
 queue = Queue.Queue()
 
-def Recv(to_recv, to_send):
-	for b in to_recv:
-		if b.recv_ready():
-			s = b.recv(2048)
-			print "Recv >" + s
-			to_send[b] = "Recv >" + s
+#TODO check if the socket shut
 
-def Send(to_send):
-	for b in to_send.keys():
-		if b.send_ready():
-			print "Sending >", to_send[b]
-			b.send(to_send[b])
-			del to_send[b]
+class SSHChanHandler(object):
+	def __init__(self, chan):
+		self.chan = chan
+		self.to_send = []
+		self.str = ""
+	def __call__(self):
+		recv = self._recv()
+		send = self._send()
+		return (recv or send)
+	def _recv(self):
+		event = False
+		if self.chan.recv_ready():
+			event = True
+			s = self.chan.recv(2048)
+			self.str += s
+			split = self.str.split("\r")
+			if len(split) > 1:
+				self._validate(split[0])
+				self.str = ""
+				self.str.join(split[1:])
+		return event
+	def _send(self):
+		event = False
+		for b in self.to_send:
+			if self.chan.send_ready():
+				event = True
+				print "Sending >", b
+				self.chan.send(b)
+				self.to_send.remove(b)
+		return event
+	def _validate(self):
+		pass
+	def shutdown(self):
+		self.chan.shutdown(2)
+
+class SSHCommandSession(SSHChanHandler):
+	def _validate(self, str):
+		b = json.loads(str)
+		b['result'] = True
+		b['server'] = 'is cool'
+		b['toto'] += 1
+		self.to_send.append(json.dumps(b))
+
+class SSHShellSession(SSHChanHandler):
+	def _validate(self, str):
+		self.to_send.append("Recv >" + str + "\r\n")
 
 def Worker():
-	to_send = {}
-	to_recv = []
 	run = True
+	sessions = []
 	while run:
-		Recv(to_recv, to_send)
-		Send(to_send)
+		sleep = []
+		map(lambda b : sleep.append(b()), sessions)
+		if not True in sleep:
+			time.sleep(0.1)
 		if not queue.empty():
 			try:
 				client, host_key = queue.get()
@@ -48,27 +85,36 @@ def Worker():
 			t.start_server(server=server)
 			chan = t.accept(1)
 			if chan is not None:
-				to_send[chan] = "Hello You :)\n"
-				to_recv.insert(0, chan)
 				server.event.wait(10)
 				if not server.event.isSet():
-					 raise '*** Client never asked for a shell.'
+					print "no such session"
+				else:
+					if server.chan_name == 'sx4it_command':
+						sessions.append(SSHCommandSession(chan))
+					elif server.chan_name == 'session':
+						sessions.append(SSHShellSession(chan))
+					else:
+						print "no such session"
 			else:
 				print "Auth fail"
 			queue.task_done()
-	for s in to_recv:
-		s.shutdown(2)
+	map(lambda b: b.shutdown, sessions)
 	queue.task_done()
 
 class SSHHandler(paramiko.ServerInterface):
 	def __init__(self):
 		self.event = threading.Event()
+		self.chan_name = ""
 	def check_channel_request(self, kind, chanid):
+		self.chan_name = kind
 		if kind == 'session':
+			self.event.set()
+			return paramiko.OPEN_SUCCEEDED
+		elif kind == 'sx4it_command':
+			self.event.set()
 			return paramiko.OPEN_SUCCEEDED
 		return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 	def check_auth_password(self, username, password):
-		#no password auth
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
 		if username in USERS.keys() and USERS[username] == key:
@@ -76,10 +122,7 @@ class SSHHandler(paramiko.ServerInterface):
 		return paramiko.AUTH_FAILED
 	def get_allowed_auths(self, username):
 		return 'publickey'
-		#no password auth
-		#return 'password,publickey'
 	def check_channel_shell_request(self, channel):
-		self.event.set()
 		return True
 	def check_channel_pty_request(self, channel, term, width, height, pixelwidth,
 		pixelheight, modes):

@@ -26,35 +26,33 @@ class SSHChanHandler(object):
 		self.chan = chan
 		self.to_send = []
 		self.str = ""
+	def fileno(self):
+		return self.chan.fileno()
 	def __call__(self):
-		recv = self._recv()
-		send = self._send()
-		return (recv or send)
+		return self._send()
 	def _recv(self):
-		event = False
-		if self.chan.recv_ready():
-			event = True
-			s = self.chan.recv(2048)
-			self.str += s
-			split = self.str.split("\r")
-			if len(split) > 1:
-				self._validate(split[0])
-				self.str = ""
-				self.str.join(split[1:])
-		return event
+		s = self.chan.recv(2048)
+		self.str += s
+		split = self.str.split("\r")
+		if len(split) > 1:
+			self._validate(split[0])
+			self.str = ""
+			self.str.join(split[1:])
 	def _send(self):
 		event = False
-		for b in self.to_send:
-			if self.chan.send_ready():
+		if self.chan.send_ready():
+			if len(self.to_send) > 0:
 				event = True
+			for b in self.to_send:
 				print "Sending >", b
 				self.chan.send(b)
 				self.to_send.remove(b)
 		return event
+
 	def _validate(self):
 		pass
 	def shutdown(self):
-		self.chan.shutdown(2)
+		self.chan.close()
 
 class SSHCommandSession(SSHChanHandler):
 	def __init__(self, chan):
@@ -68,14 +66,14 @@ class SSHCommandSession(SSHChanHandler):
 	def _validate(self, str):
 		self.sock.send(str) # forward to server via zmq
 	def __call__(self):
-		event = False
-		b = super(SSHCommandSession, self).__call__()
+		superevent = super(SSHCommandSession, self).__call__()
 		poll = self.poll.poll(timeout=0)
+		event = False
 		if len(poll) > 0:
 			recv = self.sock.recv()
 			self.to_send.append(recv)
 			event = True
-		return b or event
+		return superevent or event
 
 class SSHShellSession(SSHChanHandler):
 	def _validate(self, str):
@@ -85,9 +83,12 @@ class SSHShellSession(SSHChanHandler):
 def Worker():
 	run = True
 	sessions = []
+	#p = select.poll() # no poll in mac osx version of python
 	while run:
-		sleep = []
-		map(lambda b : sleep.append(b()), sessions)
+		map(lambda b : b(), sessions)
+#TODO find a way to monitor sessions in write.
+		select_res = select.select(sessions, sessions, sessions, 0)
+		map(lambda b : b._recv(), select_res[0])
 		if not queue.empty():
 			try:
 				client, host_key = queue.get()
@@ -105,16 +106,22 @@ def Worker():
 				if not server.event.isSet():
 					print "no such session"
 				else:
+					file = chan.makefile()
+					print file
+					print dir(file)
 					if server.chan_name == 'sx4it_command':
-						sessions.append(SSHCommandSession(chan))#.makefile()))
+						session = SSHCommandSession(chan)
+						sessions.append(session)
 					elif server.chan_name == 'session':
-						sessions.append(SSHShellSession(chan))#.makefile()))
+						session = SSHShellSession(chan)
+						session
+						sessions.append(session)
 					else:
 						print "no such session"
 			else:
 				print "Auth fail"
 			queue.task_done()
-	map(lambda b: b.shutdown, sessions)
+	map(lambda b: b.shutdown(), sessions)
 	queue.task_done()
 
 class SSHHandler(paramiko.ServerInterface):

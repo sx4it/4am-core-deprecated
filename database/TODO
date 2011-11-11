@@ -1,0 +1,10 @@
+TODO List :
+
+Change Session & Base call.	
+
+Singleton for the session
+
+Eager on some object
+Cascade on delete for orphan object
+
+Return ok/ko on request

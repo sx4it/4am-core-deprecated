@@ -4,8 +4,9 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+from base import Base
+
+from associationTable import userGroup_Has_User_Table
 
 class User(Base):
     __tablename__ = 'user'

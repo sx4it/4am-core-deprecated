@@ -4,32 +4,33 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 
+from entity import rights
+
 # TODO review!!
 
 # A class to perform transaction with 'rights' table
-class rightsRequest():
+class RightsRequest():
+
+    def __init__(self, sess):
+        self._session = sess
 
     # Get the rights object associated to the given id
     def getRightsById(sid):
-        session = Session()
-        rights = session.query(Rights).filter_by(id=sid).one()
-        return rights
+        ret = self.session.query(rights.Rights).filter_by(id=sid).one()
+        return ret
 
     # Add the given mapped object to the database
     def addRights(seld, rights):
-        session = Session()
-        session.add(rights)
-        session.commit()
+        self.session.add(rights)
+        self.session.commit()
 
     # Delete the rights column associated to the given id
     def removeRightsById(sid):
-        session = Session()
-        rights = session.query(Rights).filter_by(id=sid).one()
-        session.delete(rights)
-        session.commit()
+        ret = self.session.query(rightsRights).filter_by(id=sid).one()
+        self.session.delete(ret)
+        self.session.commit()
 
     # Delete the given mapped object from the database
     def removeRights(rights):
-        session = Session()
-        session.delete(rights)
-        session.commit()
+        self.session.delete(rights)
+        self.session.commit()

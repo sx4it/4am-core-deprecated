@@ -1,40 +1,16 @@
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlAlchemySession import SqlAlchemySession
+from entity import *
 
-print sqlalchemy.__version__ 
-
-# Create engine
-engine = create_engine('mysql://root:root@localhost/sx4it', echo=True)
+sess = SqlAlchemySession('mysql://root:root@localhost/sx4it')
 
 # test engine
-engine.execute("select 1").scalar()
+sess._engine.execute("select 1").scalar()
 
-# Get base
-Base = declarative_base()
+user1 = user.User('toto', 'titi', 'tata', 'tutu')
+sess._userRequest.addUser(user1)
 
-## import Table
+id = user1.id
 
-# Auto create all table in db if not exist
-Base.metadata.create_all(engine)
-
-
-Session = sessionmaker(bind=engine)
-
-# Get a working session
-session = Session()
-
-import sys
-
-sys.path.append('./entity') 
-sys.path.append('./request')
-
-from userRequest import *
-
-req1 = userRequest()
-req1.getUserById(1)
-
-#user1 = User('toto', 'titi', 'tata', 'tutu')
-#session.add(user1)
-#session.commit()
+print sess._userRequest.getUserById(id)
+sess._userRequest.removeUser(user1)
+print sess._userRequest.getUserById(id)

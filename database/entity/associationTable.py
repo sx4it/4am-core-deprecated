@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from sqlalchemy import Table, Text
+from sqlalchemy import Column, Integer, ForeignKey, Table, Text
+from sqlalchemy.orm import relationship, backref
 
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+from base import Base
 
 # A ManyToMany association table between UserGroup and User
 userGroup_Has_User_Table = Table('usergroup_has_user', Base.metadata,

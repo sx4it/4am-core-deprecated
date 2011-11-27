@@ -3,8 +3,10 @@
 import zmq, sys
 from jsonrpc import call
 import api
+import logging
 
 if __name__ == "__main__":
+	logging.basicConfig(level=logging.DEBUG)
 	try:
 		port = sys.argv[1]
 		context = zmq.Context()
@@ -13,8 +15,8 @@ if __name__ == "__main__":
 		while True:
 			b = socket.recv()
 			res = call.processCall(b, api)
-			print port + "___recv___ >> ", b
-			print port + "___job___ >> ", res
+			logging.debug(port + "___recv___ >> %s", b)
+			logging.debug(port + "___job___ >> %s", res)
 			socket.send_json(res)
 	except KeyboardInterrupt:
-		print "ending control" + port
+		logging.debug("ending control" + port)

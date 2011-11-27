@@ -24,7 +24,7 @@ class UserRequest():
 
     # Delete the user column associated to the given id
     def removeUserById(self, sid):
-        ret = self._session.query(User).filter_by(id=sid).one() 
+        ret = self._session.query(user.User).filter_by(id=sid).one() 
         self._session.delete(ret)
         self._session.commit()
 

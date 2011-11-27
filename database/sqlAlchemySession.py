@@ -17,7 +17,7 @@ class SqlAlchemySession:
         print sqlalchemy.__version__
 
         # Create engine
-        self._engine = create_engine(host, echo = True)
+        self._engine = create_engine(host, echo = False)
 
         # Auto create all table in db if not exist
         base.Base.metadata.create_all(self._engine, checkfirst = True)
@@ -33,4 +33,3 @@ class SqlAlchemySession:
         self._hostRequest = hostRequest.HostRequest(self._session)
         self._hostKeyRequest = hostKeyRequest.HostKeyRequest(self._session)
         self._hostGroupRequest = hostGroupRequest.HostGroupRequest(self._session)
-

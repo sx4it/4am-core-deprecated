@@ -17,9 +17,6 @@ def loadkey(key):
 b = loadkey('~/.ssh/id_rsa.pub')
 USERS = { 'chatel_b': b, 'foo': b}
 
-
-#TODO check if the socket shut
-
 class SSHChanHandler(object):
 	def __init__(self, chan):
 		self.chan = chan
@@ -73,6 +70,7 @@ class SSHCommandSession(SSHChanHandler):
 		if poll.has_key(self.sock):
 			recv = self.sock.recv()
 			self.to_send.append(recv)
+
 class SSHShellSession(SSHChanHandler):
 	def __init__(self, chan):
 		super(SSHShellSession, self).__init__(chan)
@@ -100,7 +98,6 @@ def Worker(client, host_key):
 				session = SSHCommandSession(chan)
 			elif server.chan_name == 'session':
 				session = SSHShellSession(chan)
-				session
 			else:
 				print "no such session"
 				sys.exit(1)
@@ -117,10 +114,7 @@ class SSHHandler(paramiko.ServerInterface):
 		self.chan_name = ""
 	def check_channel_request(self, kind, chanid):
 		self.chan_name = kind
-		if kind == 'session':
-			self.event.set()
-			return paramiko.OPEN_SUCCEEDED
-		elif kind == 'sx4it_command':
+		if kind == 'session' or kind == 'sx4it_command':
 			self.event.set()
 			return paramiko.OPEN_SUCCEEDED
 		return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED

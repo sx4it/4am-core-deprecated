@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+import sys
 import json
 import logging
+import traceback
 
 JSON2_SERVER_ERROR_MAX = -32000
 JSON2_SERVER_ERROR_MIN = -32099

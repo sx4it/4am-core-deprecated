@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import zmq, sys
+from jsonrpc import call
+import api
 
 if __name__ == "__main__":
 	try:
@@ -9,11 +11,10 @@ if __name__ == "__main__":
 		socket = context.socket(zmq.REP)
 		socket.bind("tcp://127.0.0.1:" + port)
 		while True:
-			b = socket.recv_json()
-			#print port + "_recv >> ", b
-			b['server'] = port
-			b['status'] = 'ok'
-			b['toto'] += 1
-			socket.send_json(b)
+			b = socket.recv()
+			res = call.processCall(b, api)
+			print port + "___recv___ >> ", b
+			print port + "___job___ >> ", res
+			socket.send_json(res)
 	except KeyboardInterrupt:
 		print "ending control" + port

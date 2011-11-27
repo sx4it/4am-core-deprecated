@@ -17,12 +17,27 @@ def analyzeJRPCRes(rawres):
         	raise JRPCError(resp['error'])
 	return resp['result']
 
+class Proxy(object):
+    def __init__(self, servicename):
+        self.__serviceName = servicename
+
+    def __getattr__(self, name):
+        if self.__serviceName != None:
+            name = "%s.%s" % (self.__serviceName, name)
+	self.__callMeth = name
+        return self
+
+    def __call__(self, *args, **kwargs):
+	postdata = forgeJRPC(self.__callMeth, 'jsonrpc', args or kwargs)
+	logging.debug('forged JRPC is : %s', postdata)
+	return postdata
+
 class zmqREQServiceProxy(object):
     def __init__(self, zmqContext, serviceURL, serviceName=None):
         self.__serviceURL = serviceURL
 	self.__context = zmqContext
 	self.__socket = zmqContext.socket(zmq.REQ)
-	self.__socket.connect("tcp://127.0.0.1:5000")
+	self.__socket.connect(serviceURL)
         self.__serviceName = serviceName
 
     def __getattr__(self, name):
@@ -38,7 +53,7 @@ class zmqREQServiceProxy(object):
 	return analyzeJRPCRes(self.__socket.recv())
 
 logging.basicConfig(level=logging.DEBUG)
-context = zmq.Context()
-proxy = zmqREQServiceProxy(context, 'tcp://127.0.0.1:5000')
-print proxy.addKey('test')
- 
+#context = zmq.Context()
+#proxy = zmqREQServiceProxy(context, 'tcp://127.0.0.1:5000')
+#print proxy.addKey('test')
+# 

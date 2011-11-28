@@ -3,10 +3,22 @@
 import zmq
 import json
 import logging
+class JRPCError(RuntimeError):
+    def __init__(self, text):
+        RuntimeError.__init__(self, text)
+
+def forgeJRPC(method, requestId, *args, **kwargs):
+       return json.dumps(dict(jsonrpc = '2.0', method = method, params = (args or kwargs), id = requestId))
+
+def analyzeJRPCRes(rawres):
+       resp = json.loads(rawres)
+       if resp.get('error') != None:
+               raise JRPCError(resp['error'])
+       return resp['result']
 
 class Proxy(object):
-    """
-    """
+	"""
+	"""
 	def __init__(self):
 		self.__callMeth = ""
 	def __getattr__(self, name):

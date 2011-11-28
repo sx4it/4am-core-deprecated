@@ -69,7 +69,6 @@ class SSHHandler(paramiko.ServerInterface):
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
 		user = Session._userRequest.getUserByName(username)
-		print key
 		if username == user.firstname and key in (paramiko.RSAKey(data=base64.decodestring(u.ukkey)) for u in user.userkey):
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED

@@ -5,6 +5,7 @@ import json
 import socket
 import logging
 from jsonrpc import proxy
+import os
 
 class Client(proxy.Proxy):
 	def __init__(self, **k):
@@ -23,7 +24,7 @@ class Client(proxy.Proxy):
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.DEBUG)
 #	try:
-	client = Client(host='127.0.0.1', port=2200, user='foo')
+	client = Client(host='127.0.0.1', port=2200, user=os.getenv('USER'))
 	for b in range(10):
 		client.User.add(name='toto', passwd='123456')
 		client.User.delete(name='toto')

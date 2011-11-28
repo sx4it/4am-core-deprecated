@@ -1,15 +1,13 @@
-#!/usr/bin/env python
-
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from base import Base
+from database.base import Base
 
 class UserKey(Base):
     __tablename__ = 'userkey'
     
     id = Column(Integer, primary_key=True)
-    ukkey = Column(String(255))
+    ukkey = Column(String(2048))
     uktype = Column(String(255))
 
     # @ManyToOne : UserKey <--> User

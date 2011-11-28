@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from base import Base
+from database.base import Base
 
 from associationTable import userGroup_Has_User_Table
 
@@ -21,7 +19,7 @@ class User(Base):
     unactivatedate = Column(DateTime, nullable=True)
     
     # @OneToMany : UserKey <--> User
-    # /
+    # userkey
 
     # @ManyToMany : User <--> UserGroup
     usergroup = relationship("UserGroup", secondary=userGroup_Has_User_Table, backref="user")

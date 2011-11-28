@@ -33,7 +33,7 @@ def getRemoteHostKey(hostname, port=22, key_type='ssh-rsa'):
     return res
 
 @Callable
-def addUserParamiko(userToAdd, userToConnect, keyFile, hostname, port=22):
+def addUser(userToAdd, userToConnect, keyFile, hostname, port=22):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((hostname, port))
     t = paramiko.Transport(sock)
@@ -61,7 +61,7 @@ def addUserParamiko(userToAdd, userToConnect, keyFile, hostname, port=22):
 
 
 @Callable
-def addUser(userToAdd, userToConnect, keyFile, hostname, port=22):
+def addUserFab(userToAdd, userToConnect, keyFile, hostname, port=22):
     '''On debian '''
     fabric.api.env.host_string = hostname + ':' + str(port)
     fabric.api.env.user = userToConnect
@@ -69,7 +69,7 @@ def addUser(userToAdd, userToConnect, keyFile, hostname, port=22):
     return fabric.api.run()
 
 @Callable
-def delUser(userToDel, userToConnect, keyFile, hostname, port=22):
+def delUserFab(userToDel, userToConnect, keyFile, hostname, port=22):
     '''On debian '''
     fabric.api.env.host_string = hostname + ':' + str(port)
     fabric.api.env.user = userToConnect

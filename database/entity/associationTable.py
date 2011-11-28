@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, Table, Text
 from sqlalchemy.orm import relationship, backref
 
-from base import Base
+from database.base import Base
 
 # A ManyToMany association table between UserGroup and User
 userGroup_Has_User_Table = Table('usergroup_has_user', Base.metadata,

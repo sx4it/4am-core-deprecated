@@ -4,11 +4,15 @@ import paramiko
 import json, subprocess, sys, zmq, multiprocessing
 import os, socket, threading, base64, Queue, time
 import select
+import logging
+
+from database import Session
+from database.entity import user
+
+from sshhandler import shell, sx4itsession
 
 PORT = 2200
 PORTLIST = range(5000, 5010) # Add 10 Controlers
-
-print PORTLIST
 
 def loadkey(key):
 	b = open(os.path.expanduser(key)).read().split()[1]
@@ -17,72 +21,7 @@ def loadkey(key):
 b = loadkey('~/.ssh/id_rsa.pub')
 USERS = { 'chatel_b': b, 'foo': b}
 
-
-#TODO check if the socket shut
-
-class SSHChanHandler(object):
-	def __init__(self, chan):
-		self.chan = chan
-		self.chan.settimeout(None)
-		self.to_send = []
-		self.str = ""
-		self.poll = zmq.core.poll.Poller() # using zmq poll to monitor all socks in reading
-		self.poll.register(self.chan, flags=zmq.POLLIN)
-	def fileno(self):
-		return self.chan.fileno()
-	def __call__(self):
-		self._send()
-		poll = dict(self.poll.poll(timeout=2))
-		if self.chan.fileno() in poll.keys():
-			self._recv()
-		return poll
-	def _recv(self):
-		s = self.chan.recv(2048)
-		if not len(s):
-			raise IOError("session finish")
-		self.str += s
-		print "str" + self.str
-		split = self.str.split("\r")
-		if len(split) > 1:
-			self._validate(split[0])
-			self.str = ""
-			self.str.join(split[1:])
-	def _send(self):
-		if self.chan.send_ready() and len(self.to_send) > 0:
-			for b in self.to_send:
-				print "Sending >", b
-				self.chan.send(b)
-			self.to_send = []
-	def _validate(self):
-		pass
-	def shutdown(self):
-		self.chan.close()
-
-class SSHCommandSession(SSHChanHandler):
-	def __init__(self, chan):
-		super(SSHCommandSession, self).__init__(chan)
-		context = zmq.Context()
-		self.sock = context.socket(zmq.REQ)
-		for port in PORTLIST:
-			self.sock.connect("tcp://127.0.0.1:" + str(port))
-		self.poll.register(self.sock, flags=zmq.POLLIN)
-	def _validate(self, str):
-		self.sock.send(str) # forward to server via zmq
-	def __call__(self):
-		poll = super(SSHCommandSession, self).__call__()
-		if poll.has_key(self.sock):
-			recv = self.sock.recv()
-			self.to_send.append(recv)
-class SSHShellSession(SSHChanHandler):
-	def __init__(self, chan):
-		super(SSHShellSession, self).__init__(chan)
-		self.to_send = ["Hello ! Welcome to sx4it !\r\n", "$>"]
-	def _validate(self, str):
-		self.to_send.append("recv <" + str + ">\r\n" + "$>")
-		#TODO prompt a shell for the user. and forward when ready json to server
-
 def Worker(client, host_key):
-	run = True
 	t = paramiko.Transport(client)
 	t.load_server_moduli()
 	t.add_server_key(host_key)
@@ -92,23 +31,25 @@ def Worker(client, host_key):
 	if chan is not None:
 		server.event.wait(10)
 		if not server.event.isSet():
-			print "no such session"
+			logging.error("no such session")
 			sys.exit(1)
 		else:
 			file = chan.makefile()
 			if server.chan_name == 'sx4it_command':
-				session = SSHCommandSession(chan)
+				session = sx4itsession.sx4itsession(chan, PORTLIST)
 			elif server.chan_name == 'session':
-				session = SSHShellSession(chan)
-				session
+				session = shell.shell(chan, PORTLIST)
 			else:
-				print "no such session"
+				logging.error("no such session")
 				sys.exit(1)
 	else:
-		print "Auth fail"
+		logging.error("Auth fail.")
 		sys.exit(1)
-	while run:
-		session()
+	try:
+		while True:
+			session()
+	except:
+		logging.info('connection closed.')
 	session.shutdown()
 
 class SSHHandler(paramiko.ServerInterface):
@@ -117,17 +58,19 @@ class SSHHandler(paramiko.ServerInterface):
 		self.chan_name = ""
 	def check_channel_request(self, kind, chanid):
 		self.chan_name = kind
-		if kind == 'session':
-			self.event.set()
-			return paramiko.OPEN_SUCCEEDED
-		elif kind == 'sx4it_command':
+		if kind == 'session' or kind == 'sx4it_command':
 			self.event.set()
 			return paramiko.OPEN_SUCCEEDED
 		return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 	def check_auth_password(self, username, password):
+		user = Session._userRequest.getUserByName(username)
+		if username == user.firstname and password == user.password:
+			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
-		if username in USERS.keys() and USERS[username] == key:
+		user = Session._userRequest.getUserByName(username)
+		print key
+		if username == user.firstname and key in (paramiko.RSAKey(data=base64.decodestring(u.ukkey)) for u in user.userkey):
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def get_allowed_auths(self, username):
@@ -166,6 +109,8 @@ class Server(object):
 
 
 if __name__ == "__main__":
+	logging.basicConfig(level=logging.DEBUG)
+	logging.debug("launching controlers -> %s", PORTLIST)
 	paramiko.util.log_to_file('demo_server.log')
 	server = Server()
 	server.run()

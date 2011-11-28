@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 
-from entity import userKey
+from database.entity import userKey
 
 # A class to perform transaction with 'userkey' table
 class UserKeyRequest():

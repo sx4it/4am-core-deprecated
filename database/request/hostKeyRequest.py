@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 
-from entity import hostKey
+from database.entity import hostKey
 
 # A class to perform transaction with 'hostkey' table
 class HostKeyRequest():

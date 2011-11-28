@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from base import Base
+from database.base import Base
 
 class HostGroup(Base):
     __tablename__ = 'hostgroup'

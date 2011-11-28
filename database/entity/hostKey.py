@@ -9,7 +9,7 @@ class HostKey(Base):
     __tablename__ = 'hostkey'
 
     id = Column(Integer, primary_key=True)
-    hkkey = Column(String(255))
+    hkkey = Column(String(2048))
     hktype = Column(String(255))
 
     #ManyToOne : HostKey <--> Host

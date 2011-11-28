@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref

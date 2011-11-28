@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from database import Session
-#from database import entity
 from database.entity import *
 
 # test engine

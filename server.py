@@ -69,7 +69,7 @@ class SSHHandler(paramiko.ServerInterface):
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
 		user = Session._userRequest.getUserByName(username)
-		if username == user.firstname and key == user.userkey.ukkey:
+		if username == user.firstname and key in (u.ukkey for u in user.userkey):
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def get_allowed_auths(self, username):

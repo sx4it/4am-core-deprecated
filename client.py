@@ -11,7 +11,8 @@ class Client(proxy.Proxy):
 		super(Client, self).__init__()
 		self.client = paramiko.SSHClient()
 		self.client.load_system_host_keys()
-		self.client.set_missing_host_key_policy(paramiko.WarningPolicy)
+		po = paramiko.WarningPolicy()
+		self.client.set_missing_host_key_policy(po)
 		self.client.connect(k['host'], k['port'], k['user'])
 		self.chan = self.client.get_transport().open_channel('sx4it_command')
 	def __call__(self, *args, **kwargs):
@@ -21,12 +22,12 @@ class Client(proxy.Proxy):
 
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.DEBUG)
-	try:
-		client = Client(host='localhost', port=2200, user='foo')
-		for b in range(10):
-			client.User.add(name='toto', passwd='123456')
-			client.User.delete(name='toto')
-			client.User.deletee('t', 'w')
+#	try:
+	client = Client(host='127.0.0.1', port=2200, user='foo')
+	for b in range(10):
+		client.User.add(name='toto', passwd='123456')
+		client.User.delete(name='toto')
+		client.User.deletee('t', 'w')
 
-	except socket.error:
-		logging.error("Error connecting to server.")
+#except socket.error:
+	logging.error("Error connecting to server.")

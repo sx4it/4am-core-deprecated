@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 
-from entity import hostGroup
+from database.entity import hostGroup
 
 # A class to perform transaction with 'hostgroup' table
 class HostGroupRequest():

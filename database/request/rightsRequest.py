@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 
-from entity import rights
+from database.entity import rights
 
 # TODO review!!
 

@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 
-from entity import host
+from database.entity import host
 
 # A class to perform transaction with 'host' table
 class HostRequest():

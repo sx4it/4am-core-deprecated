@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from base import Base
+from database.base import Base
 
 from associationTable import hostGroup_Has_Host_Table
 

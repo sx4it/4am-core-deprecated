@@ -6,6 +6,9 @@ import os, socket, threading, base64, Queue, time
 import select
 import logging
 
+from database import Session
+from database.entity import user
+
 from sshhandler import shell, sx4itsession
 
 PORT = 2200
@@ -60,9 +63,13 @@ class SSHHandler(paramiko.ServerInterface):
 			return paramiko.OPEN_SUCCEEDED
 		return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 	def check_auth_password(self, username, password):
+		user = Session._userRequest.getUserByName(username)
+		if username == user.firstname and password == user.password:
+			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
-		if username in USERS.keys() and USERS[username] == key:
+		user = Session._userRequest.getUserByName(username)
+		if username == user.firstname and key == user.userkey.ukkey:
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def get_allowed_auths(self, username):

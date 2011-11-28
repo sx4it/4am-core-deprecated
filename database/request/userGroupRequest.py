@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.orm import *
 
-from entity import userGroup
+from database.entity import userGroup
 
 # A class to perform transaction with 'usergroup' table
 class UserGroupRequest():

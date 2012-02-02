@@ -7,6 +7,14 @@ import logging
 from jsonrpc import proxy
 import os
 
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("-p", "--port", dest="port", type="int",
+                  help="port of the client", metavar="PORT", default=2200)
+parser.add_option("-a", "--addr", dest="ip",
+                  help="ip of the client", metavar="IP_ADDRESS", default="127.0.0.1")
+
 class Client(proxy.Proxy):
 	def __init__(self, **k):
 		super(Client, self).__init__()
@@ -22,9 +30,10 @@ class Client(proxy.Proxy):
 		logging.debug('recieving %s', self.chan.recv(2048))
 
 if __name__ == "__main__":
+	(options, args) = parser.parse_args()
 	logging.basicConfig(level=logging.DEBUG)
 #	try:
-	client = Client(host='127.0.0.1', port=2200, user=os.getenv('USER'))
+	client = Client(host=options.ip, port=options.port, user=os.getenv('USER'))
 	for b in range(10):
 		client.User.add(name='toto', passwd='123456')
 		client.User.delete(name='toto')

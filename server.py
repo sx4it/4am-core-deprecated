@@ -8,11 +8,20 @@ import logging
 
 from database import Session
 from database.entity import user
+from optparse import OptionParser
 
 from sshhandler import shell, sx4itsession
 
-PORT = 2200
-PORTLIST = range(5000, 5010) # Add 10 Controlers
+
+
+parser = OptionParser()
+parser.add_option("-c", "--controler", dest="NB_CONTROLLER", type="int",
+		  help="number of controllers to launch", metavar="NB_CONTROLLER", default=1)
+parser.add_option("-p", "--port", dest="PORT", type="int",
+		  help="the port of the server", metavar="PORT_NB", default=2200)
+parser.add_option("-y", "--controller-port", dest="controller_port", type="int",
+		  help="the starting port of the controllers", metavar="PORT_NB", default=5000)
+
 
 def loadkey(key):
 	b = open(os.path.expanduser(key)).read().split()[1]
@@ -21,7 +30,7 @@ def loadkey(key):
 b = loadkey('~/.ssh/id_rsa.pub')
 USERS = { 'chatel_b': b, 'foo': b}
 
-def Worker(client, host_key):
+def Worker(client, host_key, portlist):
 	t = paramiko.Transport(client)
 	t.load_server_moduli()
 	t.add_server_key(host_key)
@@ -36,9 +45,9 @@ def Worker(client, host_key):
 		else:
 			file = chan.makefile()
 			if server.chan_name == 'sx4it_command':
-				session = sx4itsession.sx4itsession(chan, PORTLIST)
+				session = sx4itsession.sx4itsession(chan, portlist)
 			elif server.chan_name == 'session':
-				session = shell.shell(chan, PORTLIST)
+				session = shell.shell(chan, portlist)
 			else:
 				logging.error("no such session")
 				sys.exit(1)
@@ -81,23 +90,23 @@ class SSHHandler(paramiko.ServerInterface):
 		return True
 
 class Server(object):
-	def __init__(self):
+	def __init__(self, port):
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.sock.bind(('', PORT))
+		self.sock.bind(('', port))
 		self.sock.listen(100)
 		self.proc = []
 	def LaunchController(self, port):
 		self.proc.append(subprocess.Popen(['./control.py', str(port)], stdout=sys.stdout, stderr=sys.stdout))
-	def run(self):
-		for port in PORTLIST:
+	def run(self, portlist):
+		for port in portlist:
 			self.LaunchController(port)
 		host_key = paramiko.RSAKey(filename='test_rsa.key')
 		thread = []
 		try:
 			while True:
 				client, addr = self.sock.accept()
-				thread.append(threading.Thread(target=Worker, args=(client, host_key)))
+				thread.append(threading.Thread(target=Worker, args=(client, host_key, portlist)))
 # thread.append(multiprocessing.Process(target=Worker, args=(client, host_key)))
 # can't test with real thread... http://github.com/robey/paramiko/issues/27
 				thread[-1].deamon = True
@@ -106,10 +115,12 @@ class Server(object):
 			map(lambda b : b.join(), thread)
 			map(lambda b : b.kill(), self.proc)
 
-
 if __name__ == "__main__":
+	(options, args) = parser.parse_args()
+	portlist = range(options.controller_port, options.controller_port + options.NB_CONTROLLER)
 	logging.basicConfig(level=logging.DEBUG)
-	logging.debug("launching controlers -> %s", PORTLIST)
+	logging.debug("server is listenning port -> %s", options.PORT)
+	logging.debug("launching controlers -> %s", portlist)
 	paramiko.util.log_to_file('demo_server.log')
-	server = Server()
-	server.run()
+	server = Server(options.PORT)
+	server.run(portlist)

@@ -17,6 +17,6 @@ if __name__ == "__main__":
 			res = call.processCall(b, api)
 			logging.debug(port + "___recv___ >> %s", b)
 			logging.debug(port + "___job___ >> %s", res)
-			socket.send_json(res)
+			socket.send(res)
 	except KeyboardInterrupt:
 		logging.debug("ending control" + port)

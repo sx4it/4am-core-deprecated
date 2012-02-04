@@ -15,6 +15,10 @@ def delete(param1):
 	logging.debug("delete -> %s", param1)
 	return "Yeah it is delete !"
 @call.Callable
+def help():
+	""" api.delete function !"""
+	return "Yeah it is delete !"
+@call.Callable
 def deletee(param1):
 	""" api.delete function !"""
 	logging.debug("delete -> %s", param1)

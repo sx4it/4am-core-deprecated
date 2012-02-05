@@ -5,22 +5,78 @@ import json, subprocess, sys, zmq, multiprocessing
 import os, socket, threading, base64, Queue, time
 import select
 import logging
+import ConfigParser
 
-from database import Session
+import database
 from database.entity import user
 from optparse import OptionParser
 
 from sshhandler import shell, sx4itsession
 
 
-
 parser = OptionParser()
-parser.add_option("-c", "--controler", dest="NB_CONTROLLER", type="int",
-		  help="number of controllers to launch", metavar="NB_CONTROLLER", default=1)
-parser.add_option("-p", "--port", dest="PORT", type="int",
-		  help="the port of the server", metavar="PORT_NB", default=2200)
-parser.add_option("-y", "--controller-port", dest="controller_port", type="int",
-		  help="the starting port of the controllers", metavar="PORT_NB", default=5000)
+parser.epilog = "Theses option are overwritting the default configuration file ('server.conf'), if no configuration file is present, the server need theses values to be set."
+parser.add_option("-c", "--controler", dest="controller_number",
+		  help="number of controllers to launch", metavar="NB_CONTROLLER")
+parser.add_option("-p", "--port", dest="server_port",
+		  help="the port of the server", metavar="PORT_NB")
+parser.add_option("", "--controller-port", dest="controller_port",
+		  help="the starting port of the controllers", metavar="PORT_NB")
+parser.add_option("", "--database-port", dest="database_port",
+		  help="database port", metavar="PORT_NB")
+parser.add_option("", "--database-ip", dest="database_ip",
+		  help="database ip", metavar="IP")
+parser.add_option("", "--database-user", dest="database_user",
+		  help="database user", metavar="USER")
+parser.add_option("", "--database-pass", dest="database_pass",
+		  help="database pass", metavar="PASS")
+parser.add_option("", "--database-name", dest="database_name",
+		  help="database name", metavar="NAME")
+parser.add_option("", "--database-controller", dest="database_controller",
+		  help="database controller", metavar="controller")
+
+class UsageException(BaseException):
+	def __init__(self, key):
+		self.key = key
+	def __str__(self):
+		return "No %s used, check your server.conf or your command line."%str(self.key)
+
+class ArgsAndFileParser(object):
+	def __init__(self):
+		self.opts = {}
+		(options, args) = parser.parse_args()
+		opt = options.__dict__
+		config = ConfigParser.RawConfigParser()
+		config.read("server.conf")
+		self.loadItemsFromSection(config, "server")
+		self.loadItemsFromSection(config, "controller")
+		self.loadItemsFromSection(config, "database")
+		for b in opt:
+			if opt[b] is not None:
+				self.opts[b] = opt[b]
+	def __str__(self):
+		return str(self.opts)
+	def __getitem__(self, key):
+		if self.opts.get(key) is None:
+			raise UsageException(key)
+		return self.opts.get(key)
+	def loadItemsFromSection(self, config, section):
+		d = {}
+		if not config.has_section(section):
+			return
+		for b in config.items(section):
+			d[section + "_" + b[0]] = b[1]
+		self.opts = dict(self.opts.items() + d.items())
+
+#TODO CLEANN !!!
+try:
+	opts = ArgsAndFileParser()
+	print opts
+	db_session = database.InitSession(opts)
+except UsageException as e:
+	print "Error !", e
+	parser.print_help()
+	sys.exit(1)
 
 
 def loadkey(key):
@@ -72,12 +128,12 @@ class SSHHandler(paramiko.ServerInterface):
 			return paramiko.OPEN_SUCCEEDED
 		return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 	def check_auth_password(self, username, password):
-		user = Session._userRequest.getUserByName(username)
+		user = db_session._userRequest.getUserByName(username)
 		if username == user.firstname and password == user.password:
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
-		user = Session._userRequest.getUserByName(username)
+		user = db_session._userRequest.getUserByName(username)
 		if username == user.firstname and key in (paramiko.RSAKey(data=base64.decodestring(u.ukkey)) for u in user.userkey):
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
@@ -115,12 +171,17 @@ class Server(object):
 			map(lambda b : b.join(), thread)
 			map(lambda b : b.kill(), self.proc)
 
+
+
 if __name__ == "__main__":
-	(options, args) = parser.parse_args()
-	portlist = range(options.controller_port, options.controller_port + options.NB_CONTROLLER)
-	logging.basicConfig(level=logging.DEBUG)
-	logging.debug("server is listenning port -> %s", options.PORT)
-	logging.debug("launching controlers -> %s", portlist)
-	paramiko.util.log_to_file('demo_server.log')
-	server = Server(options.PORT)
-	server.run(portlist)
+	try:
+		portlist = range(int(opts["controller_port"]), int(opts["controller_port"]) + int(opts["controller_number"]))
+		logging.basicConfig(level=logging.DEBUG)
+		logging.debug("server is listenning port -> %s", int(opts["server_port"]))
+		logging.debug("launching controlers -> %s", portlist)
+		paramiko.util.log_to_file('demo_server.log')
+		server = Server(int(opts["server_port"]))
+		server.run(portlist)
+	except UsageException as e:
+		print "Error !", e
+		parser.print_help()

@@ -1,4 +1,3 @@
+from session import InitSession
 
-from session import Session
-
-__all__ = ["Session"]
+#__all__ = ["InitSession"]

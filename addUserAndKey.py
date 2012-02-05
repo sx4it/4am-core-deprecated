@@ -9,6 +9,8 @@ import database
 from optparse import OptionParser
 
 parser = OptionParser()
+parser.add_option("-p", "--key-path", dest="key_path",
+		  help="key path", metavar="PATH", default="~/.ssh/id_rsa.pub")
 parser.add_option("", "--database-port", dest="database_port",
 		  help="database port", metavar="PORT_NB")
 parser.add_option("", "--database-ip", dest="database_ip",
@@ -75,9 +77,10 @@ def loadkey(key):
 	b = open(os.path.expanduser(key)).read().split()[1]
 	return b
 
-key = loadkey('~/.ssh/id_rsa.pub')
+key = loadkey(opts["key_path"])
 
 user1 = user.User(firstname, lastname, mail, password)
 user1.userkey = [userKey.UserKey(key, 'type')]
 
-db_session._userRequest.addUser(user1)
+if db_session._userRequest.addUser(user1) == True:
+	print "Suceed."

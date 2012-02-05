@@ -20,6 +20,7 @@ parser.add_option("-a", "--addr", dest="ip",
                   help="ip of the client", metavar="IP_ADDRESS", default="127.0.0.1")
 
 def loadkey(key):
+	print key
 	return paramiko.RSAKey(filename=key)
 
 class Client:
@@ -28,7 +29,7 @@ class Client:
 		self.client.load_system_host_keys()
 		po = paramiko.WarningPolicy()
 		self.client.set_missing_host_key_policy(po)
-		self.client.connect(option['host'], option['port'], option['user'], pkey=loadkey("/tmp/martial"))
+		self.client.connect(option['host'], option['port'], option['user'], pkey=loadkey(os.path.expanduser(option['key_path'])))
 		self.chan = self.client.get_transport().open_channel('sx4it_command')
 	def __call__(self, args):
 # put an id into jsonrpc requests
@@ -48,7 +49,7 @@ class Client:
 if __name__ == "__main__":
 	(options, args) = parser.parse_args()
 	#logging.basicConfig(level=logging.DEBUG)
-	client = Client(host=options.ip, port=options.port, user=os.getenv('USER'))
+	client = Client(host=options.ip, port=options.port, user=os.getenv('USER'), key_path=options.user_key)
 	try:
 		print client(args)
 	except call.JRPCError as error:

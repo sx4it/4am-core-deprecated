@@ -55,3 +55,5 @@ if __name__ == "__main__":
 	except call.JRPCError as error:
 		print "Fatal Error:"
 		print error
+	except RuntimeError as e:
+		print "Error:", e

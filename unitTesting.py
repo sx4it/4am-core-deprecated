@@ -43,11 +43,16 @@ class unitTest(unittest.TestCase):
 		logging.basicConfig(level=logging.DEBUG)
 		self.client = Client(host=options.ip, port=options.port, user=os.getenv('USER'))
 	def testUserCommand(self):
+		"""
+		Test good things :)
+		"""
 		self.assertTrue(self.client.User.add(name='toto', passwd='123456'))
 		self.assertTrue(self.client.User.delete(name='toto'))
 		self.assertTrue(self.client.User.deletee('t', 'w'))
 	def testBadFunctionName(self):
-		#testing failure with bad function name
+		"""
+		testing failure with bad function name
+		"""
 		self.assertRaises(call.JRPCError, self.client.User.WtfFunction, "t", "w")
 		self.assertRaises(call.JRPCError, self.client.Wtf.add, "t", "w")
 		self.assertRaises(call.JRPCError, self.client.Wt, "t", "w")

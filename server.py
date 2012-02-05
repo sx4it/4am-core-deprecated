@@ -7,12 +7,12 @@ import select
 import logging
 import ConfigParser
 
-import database
-from database.entity import user
 from optparse import OptionParser
 
 from sshhandler import shell, sx4itsession
 
+import jsonrpc.proxy
+import zmq
 
 parser = OptionParser()
 parser.epilog = "Theses option are overwritting the default configuration file ('server.conf'), if no configuration file is present, the server need theses values to be set."
@@ -72,12 +72,28 @@ class ArgsAndFileParser(object):
 try:
 	opts = ArgsAndFileParser()
 	print opts
-	db_session = database.InitSession(opts)
 except UsageException as e:
 	print "Error !", e
 	parser.print_help()
 	sys.exit(1)
 
+
+class ControllerProxy(jsonrpc.proxy.Proxy):
+	def __init__(self):
+
+		portlist = range(int(opts["controller_port"]), int(opts["controller_port"]) + int(opts["controller_number"]))
+		super(ControllerProxy, self).__init__()
+		context = zmq.Context()
+		self.sock = context.socket(zmq.REQ)
+		for port in portlist:
+			self.sock.connect("tcp://127.0.0.1:" + str(port)) #TODO use dynamic IP
+	def __call__(self, *args, **kwargs):
+		postdata = super(ControllerProxy, self).__call__(args, kwargs)
+		self.sock.send(postdata)
+		recv = self.sock.recv()
+		return jsonrpc.proxy.analyzeJRPCRes(recv)
+
+controllerProxy = ControllerProxy()
 
 def loadkey(key):
 	b = open(os.path.expanduser(key)).read().split()[1]
@@ -92,7 +108,7 @@ def Worker(client, host_key, portlist):
 	t.add_server_key(host_key)
 	server = SSHHandler()
 	t.start_server(server=server)
-	chan = t.accept(1)
+	chan = t.accept(20)
 	if chan is not None:
 		server.event.wait(10)
 		if not server.event.isSet():
@@ -103,8 +119,10 @@ def Worker(client, host_key, portlist):
 			if server.chan_name == 'sx4it_command':
 				session = sx4itsession.sx4itsession(chan, portlist)
 			elif server.chan_name == 'session':
+				print "making shell"
 				session = shell.shell(chan, portlist)
 			else:
+				print "wtf shell"
 				logging.error("no such session")
 				sys.exit(1)
 	else:
@@ -128,18 +146,18 @@ class SSHHandler(paramiko.ServerInterface):
 			return paramiko.OPEN_SUCCEEDED
 		return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 	def check_auth_password(self, username, password):
-		user = db_session._userRequest.getUserByName(username)
-		if username == user.firstname and password == user.password:
+		if controllerProxy.User.checkPassFromUsername(username, password): #TODO pb with password auth, it block
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
-		user = db_session._userRequest.getUserByName(username)
-		if username == user.firstname and key in (paramiko.RSAKey(data=base64.decodestring(u.ukkey)) for u in user.userkey):
+		userkey = controllerProxy.User.getKeyFromUsername(username)
+		if key == paramiko.RSAKey(data=base64.decodestring(userkey)):
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def get_allowed_auths(self, username):
-		return 'publickey'
+		return 'password,publickey'
 	def check_channel_shell_request(self, channel):
+		self.event.set()
 		return True
 	def check_channel_pty_request(self, channel, term, width, height, pixelwidth,
 		pixelheight, modes):
@@ -153,7 +171,7 @@ class Server(object):
 		self.sock.listen(100)
 		self.proc = []
 	def LaunchController(self, port):
-		self.proc.append(subprocess.Popen(['./control.py', str(port)], stdout=sys.stdout, stderr=sys.stdout))
+		self.proc.append(subprocess.Popen(['./control.py', str(port), json.dumps(opts.opts)], stdout=sys.stdout, stderr=sys.stdout))
 	def run(self, portlist):
 		for port in portlist:
 			self.LaunchController(port)

@@ -4,6 +4,7 @@ import zmq, sys
 from jsonrpc import call
 import api
 import logging
+import ast
 
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.DEBUG)

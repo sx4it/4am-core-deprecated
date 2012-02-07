@@ -36,19 +36,17 @@ class Client(proxy.Proxy):
 
 
 
+(options, args) = parser.parse_args()
+logging.basicConfig(level=logging.DEBUG)
+
 class unitTest(unittest.TestCase):
-	@classmethod
-	def setUpClass(self):
-		(options, args) = parser.parse_args()
-		logging.basicConfig(level=logging.DEBUG)
-		self.client = Client(host=options.ip, port=options.port, user=os.getenv('USER'))
+	client = Client(host=options.ip, port=options.port, user=os.getenv('USER'))
 	def testUserCommand(self):
 		"""
 		Test good things :)
 		"""
 		self.assertTrue(self.client.User.add(name='toto', passwd='123456'))
 		self.assertTrue(self.client.User.delete(name='toto'))
-		self.assertTrue(self.client.User.deletee('t', 'w'))
 	def testBadFunctionName(self):
 		"""
 		testing failure with bad function name

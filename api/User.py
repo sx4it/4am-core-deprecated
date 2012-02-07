@@ -16,7 +16,13 @@ db_session = database.InitSession(opts)
 
 @call.Callable
 def add(param1):
-	""" api.add function !"""
+	"""
+	api.add a new user in database
+
+	name = username
+	group = usergroup
+	return true if everything is ok :)
+	"""
 	logging.debug("Add -> %s", param1)
 	return True
 @call.Callable

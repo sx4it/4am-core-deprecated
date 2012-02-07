@@ -101,7 +101,7 @@ def processCall(data, RPCRoot, lookup = getCallFunc):
             elif isinstance(params, list):
                 args, kwargs = params, {}
             elif isinstance(params, dict):
-                args, kwargs = [], str_keys(params)
+                args, kwargs = [], params
             else:
                 raise RuntimeError
 

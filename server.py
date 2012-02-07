@@ -88,7 +88,7 @@ class ControllerProxy(jsonrpc.proxy.Proxy):
 		for port in portlist:
 			self.sock.connect("tcp://127.0.0.1:" + str(port)) #TODO use dynamic IP
 	def __call__(self, *args, **kwargs):
-		postdata = super(ControllerProxy, self).__call__(args, kwargs)
+		postdata = super(ControllerProxy, self).__call__(*args, **kwargs)
 		self.sock.send(postdata)
 		recv = self.sock.recv()
 		return jsonrpc.proxy.analyzeJRPCRes(recv)
@@ -146,12 +146,12 @@ class SSHHandler(paramiko.ServerInterface):
 			return paramiko.OPEN_SUCCEEDED
 		return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 	def check_auth_password(self, username, password):
-		if controllerProxy.User.checkPassFromUsername(username, password): #TODO pb with password auth, it block
+		if controllerProxy.User.checkPassFromUsername(user=username, password=password): #TODO pb with password auth, it block
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def check_auth_publickey(self, username, key):
-		userkey = controllerProxy.User.getKeyFromUsername(username)
-		if key == paramiko.RSAKey(data=base64.decodestring(userkey)):
+		userkey = controllerProxy.User.getKeyFromUsername(user = username)
+		if len(userkey) and key == paramiko.RSAKey(data=base64.decodestring(userkey)):
 			return paramiko.AUTH_SUCCESSFUL
 		return paramiko.AUTH_FAILED
 	def get_allowed_auths(self, username):

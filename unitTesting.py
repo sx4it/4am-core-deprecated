@@ -10,6 +10,8 @@ import os, sys
 
 from optparse import OptionParser
 
+logging.basicConfig(level=logging.CRITICAL)
+
 parser = OptionParser()
 parser.add_option("-p", "--port", dest="port", type="int",
                   help="port of the client", metavar="PORT", default=2200)
@@ -22,13 +24,14 @@ class Client(proxy.Proxy):
 		super(Client, self).__init__()
 		self.client = paramiko.SSHClient()
 		self.client.load_system_host_keys()
-		po = paramiko.WarningPolicy()
+		#po = paramiko.WarningPolicy()
+		po = paramiko.MissingHostKeyPolicy()
 		self.client.set_missing_host_key_policy(po)
 		self.client.connect(option['host'], option['port'], option['user'])
 		self.chan = self.client.get_transport().open_channel('sx4it_command')
 	def __call__(self, *args, **kwargs):
 # put an id into jsonrpc requests
-		postdata = super(Client, self).__call__(args, kwargs)
+		postdata = super(Client, self).__call__(*args, **kwargs)
 		self.chan.send(postdata + "\r")
 		res = self.chan.recv(2048)
 		logging.debug('recieving %s', res)
@@ -41,12 +44,43 @@ logging.basicConfig(level=logging.DEBUG)
 
 class unitTest(unittest.TestCase):
 	client = Client(host=options.ip, port=options.port, user=os.getenv('USER'))
-	def testUserCommand(self):
+	def testUser0AddCommand(self):
 		"""
-		Test good things :)
+		testing Add User Command
 		"""
-		self.assertTrue(self.client.User.add(name='toto', passwd='123456'))
-		self.assertTrue(self.client.User.delete(name='toto'))
+		self.assertEqual(self.client.User.add(firstname='toto'), "No lastname given")
+		self.assertEqual(self.client.User.add(firstname='toto', password='123456', lastname="wooo", email="toto@gmail.com"), True)
+		self.assertEqual(self.client.User.add(firstname='tata', password='123456', lastname="wooo", email="toto@gmail.com"), True)
+		self.assertEqual(self.client.User.add(firstname='user_with_key', password='123456', lastname="wooo", email="toto@gmail.com", key="$$$$$$$$$$"), True)
+	def testUser1List(self):
+		"""
+		testing List User Command
+		"""
+		self.assertIn("toto" ,self.client.User.list())
+	def testUser2checkPassFromUsername(self):
+		"""
+		testing List User Command
+		"""
+		self.assertEqual(self.client.User.checkPassFromUsername(user = "toto", password= "123456"), True)
+		self.assertEqual(self.client.User.checkPassFromUsername(user = "toto", password= "123457"), False)
+		self.assertEqual(self.client.User.checkPassFromUsername(user = "toto", password= ""), False)
+		self.assertEqual(self.client.User.checkPassFromUsername(user = "toto", password= "12345"), False)
+		self.assertEqual(self.client.User.checkPassFromUsername(user = "toto"), False)
+		self.assertEqual(self.client.User.checkPassFromUsername(), False)
+	def testUser3getKeyFromUsername(self):
+		"""
+		testing List User Command
+		"""
+		self.assertEqual(self.client.User.getKeyFromUsername(user = "toto"), "")
+		self.assertEqual(self.client.User.getKeyFromUsername(user = "user_with_key"), "$$$$$$$$$$")
+	def testUser4DelCommand(self):
+		"""
+		testing Del User Command
+		"""
+		self.assertEqual(self.client.User.delete(firstname='t'), "t cannot be delete.")
+		self.assertEqual(self.client.User.delete(firstname='toto'), True)
+		self.assertEqual(self.client.User.delete(firstname='tata'), True)
+		self.assertEqual(self.client.User.delete(firstname='user_with_key'), True)
 	def testBadFunctionName(self):
 		"""
 		testing failure with bad function name
@@ -59,5 +93,4 @@ class unitTest(unittest.TestCase):
 	#TODO Add more stuff (and not only test Proxy)
 
 if __name__ == "__main__":
-	logging.basicConfig(level=logging.CRITICAL)
 	unittest.main()

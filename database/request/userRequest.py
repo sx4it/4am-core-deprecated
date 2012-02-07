@@ -13,6 +13,11 @@ class UserRequest():
         self._session = sess
     
     # Get the user object associated to the given id
+    def getAllUser(self):
+        ret = self._session.query(user.User).all()
+        return ret
+
+    # Get the user object associated to the given id
     def getUserById(self, sid):
         ret = self._session.query(user.User).filter_by(id=sid).one() 
         return ret

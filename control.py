@@ -2,9 +2,10 @@
 
 import zmq, sys
 from jsonrpc import call
-import api
 import logging
 import ast
+import api
+import inspect
 
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.DEBUG)
@@ -15,6 +16,12 @@ if __name__ == "__main__":
 		socket.bind("tcp://127.0.0.1:" + port)
 		while True:
 			b = socket.recv()
+			# reload each time for testing :)
+			reload(api)
+			for name in dir(api):
+				member = getattr(api, name)
+				if inspect.ismodule(member):
+					reload(member)
 			res = call.processCall(b, api)
 			logging.debug(port + "___recv___ >> %s", b)
 			logging.debug(port + "___job___ >> %s", res)

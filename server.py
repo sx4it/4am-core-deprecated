@@ -130,9 +130,11 @@ def Worker(client, host_key, portlist):
 		sys.exit(1)
 	try:
 		while True:
-			session()
-	except:
+				session()
+	except socket.error:
 		logging.info('connection closed.')
+	except IOError as e:
+		logging.info('connection closed:' + str(e))
 	session.shutdown()
 
 class SSHHandler(paramiko.ServerInterface):

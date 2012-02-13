@@ -50,6 +50,8 @@ class unitTest(unittest.TestCase):
 		"""
 		self.assertEqual(self.client.User.add(firstname='toto'), "No lastname given")
 		self.assertEqual(self.client.User.add(firstname='toto', password='123456', lastname="wooo", email="toto@gmail.com"), True)
+		#Adding the same user should be false
+		self.assertEqual(self.client.User.add(firstname='toto', password='123456', lastname="wooo", email="toto@gmail.com"), False)
 		self.assertEqual(self.client.User.add(firstname='tata', password='123456', lastname="wooo", email="toto@gmail.com"), True)
 		self.assertEqual(self.client.User.add(firstname='user_with_key', password='123456', lastname="wooo", email="toto@gmail.com", key="$$$$$$$$$$"), True)
 	def testUser1List(self):

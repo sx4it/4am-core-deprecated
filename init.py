@@ -84,3 +84,5 @@ user1.userkey = [userKey.UserKey(key, 'type')]
 
 if db_session._userRequest.addUser(user1) == True:
 	print "Suceed."
+else:
+	print "Failed !!! (userkey already in db ?)"

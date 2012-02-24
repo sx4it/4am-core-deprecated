@@ -1,6 +1,6 @@
 ## This a test API
 
-from jsonrpc import Callable
+from call import Callable
 
 # For Paramiko
 import paramiko
@@ -9,6 +9,7 @@ import socket
 import fabric.api
 import fabric.network
 import Server
+import base64
 
 fabric.api.env.no_agent = True
 fabric.api.env.reject_unknown_hosts = True
@@ -33,12 +34,16 @@ def getRemoteHostKey(hostname, port=22, key_type='ssh-rsa'):
     return res
 
 @Callable
-def addUser(userToAdd, userToConnect, keyFile, hostname, port=22):
+def addUser(userToAdd, userToConnect, key, hostname, port=22):
+    if keytype == 'ssh-rsa': 
+        key = paramiko.RSAKey(data=base64.decodestring(key)) 
+    elif keytype == 'ssh-dss': 
+        key = paramiko.DSSKey(data=base64.decodestring(key)) 
+    else:
+        raise RuntimeError('Invalid key type.')
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((hostname, port))
     t = paramiko.Transport(sock)
-    # FIXME: We are only loading RSAKeys and not DSS
-    key = paramiko.RSAKey.from_private_key_file(keyFile)
     # FIXME: The remote key type is hard coded
     t.connect(hostkey=Server.remoteHostKeys[hostname]['ssh-rsa'], username=userToConnect, pkey=key)
     chan = t.open_session() 
@@ -79,28 +84,45 @@ def delUserFab(userToDel, userToConnect, keyFile, hostname, port=22):
 
 
 @Callable
-def reloadRemoteHostKeys(filename=None):
+def reloadRemoteHostKeysFromFile(filename=None):
+    '''Can be useful for debugging'''
     if filename is None:
-        filename = remoteHostKeysFile
-    remoteHostKeys.clear()
-    remoteHostKeys.load(filename)
+        filename = Server.remoteHostKeysFile
+    Server.remoteHostKeys.clear()
+    Server.remoteHostKeys.load(filename)
 
 @Callable
-def addRSARemoteHostKey(hostname, key):
-    '''TODO'''
-    raise RuntimeError('Not Implemented')
+def addRemoteHostKey(hostname, keytype, key):
+    '''
+    Some day whe should also add ECDSA key
+    '''
+    if keytype == 'ssh-rsa': 
+        key = paramiko.RSAKey(data=base64.decodestring(key)) 
+    elif keytype == 'ssh-dss': 
+        key = paramiko.DSSKey(data=base64.decodestring(key)) 
+    else:
+        raise RuntimeError('Invalid key type.')
+    Server.remoteHostKeys.add(hostname, keytype, key)
+    return True
 
 @Callable
-def delRSARemoteHostKey(hostname, key):
-    '''TODO'''
-    raise RuntimeError('Not Implemented')
+def delRemoteHostKey(hostname):
+    '''
+    Paramiko implementation of the HostKeys object seems buggy.
+    del is not implemented on the dictionnary abstraction.
+    It seems that it's mandatory to manipulate directly the _entries var.
+    '''
+    i = 0
+    for e in Server.remoteHostKeys._entries: 
+        if (hostname in e.hostnames):
+            Server.remoteHostKeys._entries.pop(i)
+            break
+        i += 1
+    return True
     
 @Callable
-def addDSSRemoteHostKey(hostname, key):
-    '''TODO'''
-    raise RuntimeError('Not Implemented')
-
-@Callable
-def delDSSRemoteHostKey(hostname, key):
-    '''TODO'''
-    raise RuntimeError('Not Implemented')
+def dumpRemoteHostKey():
+    '''Debug function'''
+    for i in Server.remoteHostKeys:
+        print i, Server.remoteHostKeys[i]
+    return True

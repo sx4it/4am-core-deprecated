@@ -66,7 +66,7 @@ def getCallFunc(RPCRoot, methName):
     if (current is not None and
             (getattr(current, 'isJRPCCallable', None) is None or
             current.isJRPCCallable is not True)):
-    	logging.debug('Method %s found but not set to be exportable.', methName)
+      logging.debug('Method %s found but not set to be exportable.', methName)
         current = None
     return current
 
@@ -124,8 +124,8 @@ def processCall(data, RPCRoot, lookup = getCallFunc):
                             data = dict(python_traceback = traceback.format_exc()))
                     else:
                         error = dict(code = JSON2_INTERNAL_ERROR,
-                        	 message = 'Internal error.',
-                        	 data = dict(python_traceback = traceback.format_exc()))
+                           message = 'Internal error.',
+                           data = dict(python_traceback = traceback.format_exc()))
     response = dict(jsonrpc = '2.0', id = requestId)
     if error:
         response['error'] = error

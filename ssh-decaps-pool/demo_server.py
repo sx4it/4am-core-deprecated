@@ -155,53 +155,53 @@ class Server (paramiko.ServerInterface):
 #        sys.exit(1)
 
 def HandleClient():
-	try:
-	    context = zmq.Context()
-	    zmqsocket = context.socket(zmq.REQ)
-	    zmqsocket.connect("tcp://127.0.0.1:5000")
-	    t = paramiko.Transport(client)
-	    try:
-		t.load_server_moduli()
-	    except:
-		print '(Failed to load moduli -- gex will be unsupported.)'
-		raise
-	    t.add_server_key(host_key)
-	    server = Server()
-	    try:
-		t.start_server(server=server)
-	    except paramiko.SSHException, x:
-		print '*** SSH negotiation failed.'
-		sys.exit(1)
+  try:
+      context = zmq.Context()
+      zmqsocket = context.socket(zmq.REQ)
+      zmqsocket.connect("tcp://127.0.0.1:5000")
+      t = paramiko.Transport(client)
+      try:
+    t.load_server_moduli()
+      except:
+    print '(Failed to load moduli -- gex will be unsupported.)'
+    raise
+      t.add_server_key(host_key)
+      server = Server()
+      try:
+    t.start_server(server=server)
+      except paramiko.SSHException, x:
+    print '*** SSH negotiation failed.'
+    sys.exit(1)
 
-	    # wait for auth
-	    chan = t.accept(20)
-	    if chan is None:
-		print '*** No channel.'
-		sys.exit(1)
-	    print 'Authenticated!'
+      # wait for auth
+      chan = t.accept(20)
+      if chan is None:
+    print '*** No channel.'
+    sys.exit(1)
+      print 'Authenticated!'
 
-	    server.event.wait(10)
-	    if not server.event.isSet():
-		print '*** Client never asked for a shell.'
-		sys.exit(1)
+      server.event.wait(10)
+      if not server.event.isSet():
+    print '*** Client never asked for a shell.'
+    sys.exit(1)
 
-	    chan.send('Forwarding decapsulated traffic...')
-	    while True:
-		x = chan.recv(1024)
-		if len(x) == 0:
-			break
-		zmqsocket.send(x)
-		zmqsocket.recv()
-	    chan.close()
+      chan.send('Forwarding decapsulated traffic...')
+      while True:
+    x = chan.recv(1024)
+    if len(x) == 0:
+      break
+    zmqsocket.send(x)
+    zmqsocket.recv()
+      chan.close()
 
-	except Exception, e:
-	    print '*** Caught exception: ' + str(e.__class__) + ': ' + str(e)
-	    traceback.print_exc()
-	    try:
-		t.close()
-	    except:
-		pass
-	    sys.exit(1)
+  except Exception, e:
+      print '*** Caught exception: ' + str(e.__class__) + ': ' + str(e)
+      traceback.print_exc()
+      try:
+    t.close()
+      except:
+    pass
+      sys.exit(1)
 
 
 #hostname = '10.211.55.8'
@@ -217,8 +217,8 @@ def HandleClient():
 #
 
 def sigchldHandler(sig, frame):
-	deadChildPid, status = os.wait()
-	print '{0!s} subprocess exited.'.format(deadChildPid)
+  deadChildPid, status = os.wait()
+  print '{0!s} subprocess exited.'.format(deadChildPid)
 
 gl_childlist = [ ]
 run = True
@@ -237,28 +237,28 @@ except Exception, e:
     sys.exit(1)
 
 while run:
-	try:
-		client, addr = sock.accept()
-		print 'Got a connection from {0} !'.format(addr)
-		try:
-			pid = os.fork()
-			if pid == 0:
-				sock.close()
-				Random.atfork()
-				HandleClient()
+  try:
+    client, addr = sock.accept()
+    print 'Got a connection from {0} !'.format(addr)
+    try:
+      pid = os.fork()
+      if pid == 0:
+        sock.close()
+        Random.atfork()
+        HandleClient()
                                 run = False
-			else:
-				print 'Created a new forked process with pid {0!s}.'.format(pid)
-		except OSError, e:
-			print '*** Fork failed: ' + str(e)
-			traceback.print_exc()
-	except socket.error, e:
-		if e.errno == 4:
-			print 'WARNING: accept interrupted.'
-		else:
-			raise e
-	except Exception, e:
-		print 'ERROR: accept failed: ' + str(e)
-		traceback.print_exc()
+      else:
+        print 'Created a new forked process with pid {0!s}.'.format(pid)
+    except OSError, e:
+      print '*** Fork failed: ' + str(e)
+      traceback.print_exc()
+  except socket.error, e:
+    if e.errno == 4:
+      print 'WARNING: accept interrupted.'
+    else:
+      raise e
+  except Exception, e:
+    print 'ERROR: accept failed: ' + str(e)
+    traceback.print_exc()
 
 

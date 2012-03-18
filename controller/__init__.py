@@ -1,5 +1,5 @@
 import sys, os
-sys.path.append(os.getcwd())
+sys.path.insert(0, os.path.abspath('..'))
 import common
 
 import api

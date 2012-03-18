@@ -1,29 +1,35 @@
-:mod:`sshhandler.abstracthandler` Module
----------------------------
+sshhandler Package
+==================
+
+:mod:`sshhandler` Package
+-------------------------
+
+.. automodule:: server.sshhandler
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`abstracthandler` Module
+-----------------------------
+
 .. automodule:: server.sshhandler.abstracthandler
-  :members:
-  :undoc-members:
-  :show-inheritance:
-  :special-members:
-  :private-members:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
+:mod:`shell` Module
+-------------------
 
-:mod:`sshhandler.shell` Module
----------------------------
 .. automodule:: server.sshhandler.shell
-  :members:
-  :undoc-members:
-  :show-inheritance:
-  :special-members:
-  :private-members:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
+:mod:`sx4itsession` Module
+--------------------------
 
-:mod:`sshhandler.sx4itsession` Module
----------------------------
 .. automodule:: server.sshhandler.sx4itsession
-  :members:
-  :undoc-members:
-  :show-inheritance:
-  :special-members:
-  :private-members:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 

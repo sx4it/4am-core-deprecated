@@ -1,4 +1,4 @@
-Server Package
+server Package
 ==============
 
 :mod:`server` Package
@@ -10,17 +10,17 @@ Server Package
     :show-inheritance:
 
 :mod:`Server` Module
----------------------------
+--------------------
+
 .. automodule:: server.Server
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`sshhandler` Module
----------------------------
-.. automodule:: server.sshhandler
-  :members:
-  :undoc-members:
-  :show-inheritance:
+Subpackages
+-----------
+
 .. toctree::
-   server.sshhandler
+
+    server.sshhandler
+

@@ -14,6 +14,8 @@ Bienvenue ! Ceci est la super documentation de 4am |release|.
 .. toctree::
    :maxdepth: 2
 
+   reStructuredText
+   autodoc
 
 Indices and tables
 ------------------

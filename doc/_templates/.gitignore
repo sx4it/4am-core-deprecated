@@ -1,0 +1,6 @@
+# This directory is needed by Sphinx, therefore:
+
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore

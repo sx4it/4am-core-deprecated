@@ -1,4 +1,5 @@
 import zmq, sys
+from common import *
 from common.jsonrpc import call
 import logging
 import ast

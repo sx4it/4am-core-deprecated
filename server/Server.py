@@ -11,8 +11,8 @@ from optparse import OptionParser
 
 from sshhandler import shell, sx4itsession
 
-import common.jsonrpc.proxy
 from common import *
+import common.jsonrpc.proxy
 import zmq
 
 #from optparse import OptionParser

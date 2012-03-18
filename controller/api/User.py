@@ -8,11 +8,11 @@ import StringIO
 import database
 from database.entity import user
 from database.entity import userKey
+from common.sx4itconf import Sx4itConf
 from common.jsonrpc import call
-from common import sx4itconf
 
 #init db session with conf file information
-db_session = database.InitSession(sx4itconf.Sx4itConf.opts)
+db_session = database.InitSession(Sx4itConf.opts)
 
 
 def pprinttable(rows):

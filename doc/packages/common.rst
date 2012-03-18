@@ -1,4 +1,4 @@
-common Package
+Common Package
 ==============
 
 :mod:`common` Package

@@ -1,3 +1,5 @@
-""" WOoo """
-import jsonrpc, sx4itconf
+"""
+common package
+"""
+
 __all__ = ["jsonrpc", "sx4itconf"]

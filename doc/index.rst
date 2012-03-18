@@ -15,7 +15,7 @@ Bienvenue ! Ceci est la super documentation de 4am |release|.
    :maxdepth: 2
 
    reStructuredText
-   autodoc
+   packages/modules
 
 Indices and tables
 ------------------

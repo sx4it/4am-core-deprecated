@@ -31,16 +31,16 @@ class UserRequest():
     # Add the given mapped object to the database
     def addUser(self, user_):
         if self._session.query(user.User).filter_by(firstname=user_.firstname).count() != 0:
-    return False
+          return False
 #TODO change to login ?
-  self._session.add(user_)
-  self._session.commit()
-  return True
+        self._session.add(user_)
+        self._session.commit()
+        return True
 
     # Delete the user column associated to the given id
     def removeUserById(self, sid):
         ret = self._session.query(user.User).filter_by(id=sid).one() 
-  return removeUser(ret)
+        return removeUser(ret)
 
     # Delete the given mapped object from the database
     def removeUser(self, user):

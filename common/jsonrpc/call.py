@@ -63,11 +63,9 @@ def getCallFunc(RPCRoot, methName):
         if current is None:
             logging.debug('Method %s not found found.', methName)
             break
-    if (current is not None and
-            (getattr(current, 'isJRPCCallable', None) is None or
-            current.isJRPCCallable is not True)):
+    if (current is not None and (getattr(current, 'isJRPCCallable', None) is None or current.isJRPCCallable is not True)):
       logging.debug('Method %s found but not set to be exportable.', methName)
-        current = None
+      current = None
     return current
 
 

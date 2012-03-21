@@ -7,6 +7,13 @@ import api
 import inspect
 
 def run():
+  """
+  Entry point for the Controller function.
+  The controller is biding a zmq socket on the port given, it wait for a JsonRPC call.
+    .. note::
+      for the moment we are reloading the api at each call, this is very bad for perfomance (it increase each call time by 200%)
+      but it realy improve the developpement speed on the api component.
+  """
   logging.basicConfig(level=logging.DEBUG)
   try:
     port = sys.argv[1]

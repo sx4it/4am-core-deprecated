@@ -4,6 +4,9 @@ import common.jsonrpc
 import json
 
 class shell(abstracthandler.Handler):
+  """
+  This class is used to answer the openssh client, we listen on the **session** channel. And answer properly so that the user can have a pronpt.
+  """
   def __init__(self, chan, portlist):
     super(shell, self).__init__(chan, portlist)
     context = zmq.Context()

@@ -3,6 +3,11 @@ import abstracthandler
 import json
 
 class sx4itsession(abstracthandler.Handler):
+  """
+  This class is a simple forwarder.
+  It store and forward packets to the Controllers. It Use zmq to dynamicly choose between host.
+  Distribution between host is equal, it is native in zmq.
+  """
   def __init__(self, chan, portlist):
     super(sx4itsession, self).__init__(chan, portlist)
     context = zmq.Context()

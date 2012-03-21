@@ -1,6 +1,9 @@
 import zmq
 
 class Handler(object):
+  """
+  This is the base ssh handler, it can be used to do anything, it answer to the client request and call the corresponding functions.
+  """
   def __init__(self, chan, portlist):
     self.chan = chan
     self.chan.settimeout(None)

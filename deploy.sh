@@ -8,17 +8,40 @@ then
 	exit 1
 fi
 
-echo "Updating the system."
-apt-get update && apt-get dist-upgrade
+function debian_dependencies
+{
+    echo "Updating the system."
+    apt-get update && apt-get dist-upgrade -y
+    
+    echo "Installing some interesting package."
+    apt-get install -y \
+    curl python build-essential \
+    'libbz2-dev' 'libsqlite3-dev' 'zlib1g-dev' 'libxml2-dev' 'libxslt1-dev' 'libgdbm-dev' 'libgdb-dev' 'libxml2' 'libssl-dev' 'tk-dev' 'libgdbm-dev' 'libexpat1-dev' 'libncursesw5-dev' \
+    uuid-dev libmysqlclient-dev mysql-server git
+}
 
-echo "Installing some interesting package."
-apt-get install -y \
-curl python build-essential \
-'libbz2-dev' 'libsqlite3-dev' 'zlib1g-dev' 'libxml2-dev' 'libxslt1-dev' 'libgdbm-dev' 'libgdb-dev' 'libxml2' 'libssl-dev' 'tk-dev' 'libgdbm-dev' 'libexpat1-dev' 'libncursesw5-dev' \
-uuid-dev libmysqlclient-dev mysql-server git
+function debian_dependencies
+{
+    echo "Updating the system."
+    yum update -y
+
+    echo "Installing package needed to build things."
+    yum -y install gcc gcc-c++ make
+    echo "Installing package needed to build python."
+    yum -y install openssl-devel* zlib*.x86_64
+    echo "Installing package needed to build zmq."
+    yum -y install libuuid-devel
+    echo "Installing git."
+    yum -y install git
+}
  
 function install_zmq
 {
+    if [ -f /usr/local/lib/libzmq.so ]
+    then
+        echo "ZeroMQ seems to be already installed, skipping."
+        return 0
+    fi
 	if [ -z "$1" ]                           # Is parameter #1 zero length?
 	then
 		echo "Need the version number !"  # Or no parameter passed.
@@ -33,31 +56,47 @@ function install_zmq
 	make
 	make install
 	cd -
-	rm -rf zeromq-$ZMQVERS
-	rm zeromq-$ZMQVERS.tar.gz
+	rm -rf zeromq-$ZMQVERS zeromq-$ZMQVERS.tar.gz
+    echo /usr/local/lib >> /etc/ld.so.conf.d/zmq.conf
 	ldconfig
 	echo "Installed zeromq."
 }
 
-#install_zmq 2.1.11
+if [ -f /etc/debian_version ]
+then
+    debian_dependencies
+    adduser --system --force-badname --home /opt/4am/ --shell /bin/bash --disabled-password 4am
+else if [ -f /etc/centos-release ]
+then
+    centos_dependencies
+    adduser --system --home /opt/4am/ --shell /bin/bash  --create-home 4am
+else
+    echo "Unsupported system, sorry."
+fi
+
+install_zmq 2.1.11
  
-adduser --system --force-badname --home /opt/4am/ --shell /bin/bash --disabled-password 4am
  
 cat > /opt/4am/4am-deploy.sh <<EOF
 #!/bin/bash
+
+set -e 
 
 echo "Installating of python through pythonbrew."
 curl -kL http://xrl.us/pythonbrewinstall | bash
 echo source /opt/4am/.pythonbrew/etc/bashrc >> ~/.bashrc
 source /opt/4am/.pythonbrew/etc/bashrc
-pythonbrew install 2.7.2
-pythonbrew install --configure="--with-threads--enable-shared" \
+pythonbrew install --configure="--with-threads --enable-shared" \
                    --force \
                    --no-setuptools \
                    --jobs=2 \
                    --verbose 2.7.2
-pythonbrew use 2.7.2
-export LD_LIBRARY_PATH=$HOME/.pythonbrew/pythons/Python-2.7.2/lib
+# Tricks cause it's not returning 0 on sucess
+set +e
+pythonbrew switch 2.7.2
+set -e
+echo export LD_LIBRARY_PATH=~/.pythonbrew/pythons/Python-2.7.2/lib >> ~/.bashrc
+export LD_LIBRARY_PATH=~/.pythonbrew/pythons/Python-2.7.2/lib
 echo "Installation of python completed."
 
 echo "Installing pip."
@@ -65,7 +104,7 @@ curl -O http://python-distribute.org/distribute_setup.py
 python distribute_setup.py && easy_install pip
 
 echo "Installing some python packages."
-pip-2.7 install pyzmq sqlalchemy MySQL-python
+pip-2.7 install pyzmq sqlalchemy MySQL-python paramiko
 
 git clone git://github.com/sx4it/4am-core.git
 cd 4am-core/

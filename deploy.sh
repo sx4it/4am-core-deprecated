@@ -20,19 +20,16 @@ function debian_dependencies
     uuid-dev libmysqlclient-dev mysql-server git
 }
 
-function debian_dependencies
+function centos_dependencies
 {
     echo "Updating the system."
     yum update -y
 
-    echo "Installing package needed to build things."
-    yum -y install gcc gcc-c++ make
-    echo "Installing package needed to build python."
-    yum -y install openssl-devel* zlib*.x86_64
-    echo "Installing package needed to build zmq."
-    yum -y install libuuid-devel
-    echo "Installing git."
-    yum -y install git
+    echo "Installing package needed to build python, zmq and some python packages."
+    yum -y install gcc gcc-c++ make \
+    openssl-devel* zlib*.x86_64 \
+    libuuid-devel mysql-devel \
+    git
 }
  
 function install_zmq
@@ -66,7 +63,7 @@ if [ -f /etc/debian_version ]
 then
     debian_dependencies
     adduser --system --force-badname --home /opt/4am/ --shell /bin/bash --disabled-password 4am
-else if [ -f /etc/centos-release ]
+elif [ -f /etc/centos-release ]
 then
     centos_dependencies
     adduser --system --home /opt/4am/ --shell /bin/bash  --create-home 4am

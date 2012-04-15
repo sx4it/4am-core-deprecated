@@ -2,6 +2,7 @@ Init Script
 ==============
 
 The ``init.py`` script is used to upload a new key to the sql server, it use the *server.conf* file. It connect remotly to the database and upload the desired key for your account.
+The username is taken from the environnment.
 
 **Usage: init.py [options]**
   Options:

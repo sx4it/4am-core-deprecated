@@ -18,7 +18,6 @@ parser.add_option("-p", "--port", dest="port", type="int",
 parser.add_option("-a", "--addr", dest="ip",
                   help="ip of the client", metavar="IP_ADDRESS", default="127.0.0.1")
 
-
 class Client(proxy.Proxy):
   def __init__(self, **option):
     super(Client, self).__init__()
@@ -27,11 +26,13 @@ class Client(proxy.Proxy):
     #po = paramiko.WarningPolicy()
     po = paramiko.MissingHostKeyPolicy()
     self.client.set_missing_host_key_policy(po)
-    self.client.connect(option['host'], option['port'], option['user'])
+    print option['user'] 
+    self.client.connect(option['host'], option['port'], option['user'], key_filename=option['key'])
     self.chan = self.client.get_transport().open_channel('sx4it_command')
   def __call__(self, *args, **kwargs):
 # put an id into jsonrpc requests
     postdata = super(Client, self).__call__(*args, **kwargs)
+    logging.debug('sending %s', postdata)
     self.chan.send(postdata + "\r")
     res = self.chan.recv(2048)
     logging.debug('recieving %s', res)
@@ -42,8 +43,11 @@ class Client(proxy.Proxy):
 (options, args) = parser.parse_args()
 logging.basicConfig(level=logging.DEBUG)
 
+#class serverTest(unittest.TestCase):
+#    def setUp(self):
+#
 class unitTest(unittest.TestCase):
-  client = Client(host=options.ip, port=options.port, user=os.getenv('USER'))
+  client = Client(host=options.ip, port=options.port, user=os.getenv('USER'), key=os.getenv('KEYPATH'))
   def testUser0AddCommand(self):
     """
     testing Add User Command

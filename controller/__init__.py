@@ -6,6 +6,6 @@ sys.path.insert(0, os.path.abspath('..'))
 import common
 
 import api
-import Controller
+import server
 
 __all__ = ["api"]

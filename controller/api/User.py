@@ -5,15 +5,10 @@ test api for autocomplete generation
 import logging
 import pprint
 import StringIO
-import database
+from controller.server import Server
 from database.entity import user
 from database.entity import userKey
-from common.sx4itconf import Sx4itConf
 from common.jsonrpc import call
-
-#init db session with conf file information
-db_session = database.InitSession(Sx4itConf.opts)
-
 
 def pprinttable(rows):
   out = StringIO.StringIO()
@@ -50,7 +45,7 @@ def list(*param, **dic):
   """
   api.list list all users
   """
-  users = db_session._userRequest.getAllUser()
+  users = Server.instance().db._userRequest.getAllUser()
   s = StringIO.StringIO()
   tab = [("id", "firtname", "lastname", "email")]
   for b in users:
@@ -81,7 +76,7 @@ def add(*param, **dic):
   user1 = user.User(firstname, lastname, email, password)
   if dic.get("key") is not None:
     user1.userkey = [userKey.UserKey(dic["key"], 'type')] # Add key if he gave one
-  if db_session._userRequest.addUser(user1) == True:
+  if Server.instance().db._userRequest.addUser(user1) == True:
     return True
   return False
 
@@ -94,13 +89,12 @@ def delete(*param, **dic):
     return "No firstname given"
   firstname = dic.get("firstname")
   try:
-    user = db_session._userRequest.getUserByName(firstname)
+    user = Server.instance().db._userRequest.getUserByName(firstname)
   except:
     return "%s cannot be delete."%firstname
-  if db_session._userRequest.removeUser(user):
+  if Server.instance().db._userRequest.removeUser(user):
     return True
   return "%s cannot be delete."%firstname
-
 
   name = dic.get("name")
   if name is None:
@@ -116,7 +110,7 @@ def checkPassFromUsername(*username, **dic):
     if dic.get("password") is None:
       return False
     password = dic.get("password")
-    user = db_session._userRequest.getUserByName(user)
+    user = Server.instance().db._userRequest.getUserByName(user)
     if user.password == password:
       return True
   except : #TODO finaly ?
@@ -129,9 +123,13 @@ def getKeyFromUsername(*username, **dic):
     return ""
   user = dic.get("user")
   try:
-    user = db_session._userRequest.getUserByName(user)
-    keys = user.userkey[0].ukkey
-    logging.debug("getKeyFromUsername-> %s", keys)
-    return keys
-  except :
+    user = Server.instance().db._userRequest.getUserByName(user)
+  except orm_exc.NoResultFound:
+    #FIXME: Not found results are not really an exception
     return ""
+  if len(user.userkey) > 0:
+    keys = user.userkey[0].ukkey
+  else:
+    return ""
+  logging.debug("getKeyFromUsername-> %s", keys)
+  return keys

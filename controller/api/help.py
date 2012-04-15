@@ -3,7 +3,6 @@ help :)
 """
 from common.jsonrpc import call
 import logging
-from .. import *
 
 @call.Callable
 def help(*param, **dic):

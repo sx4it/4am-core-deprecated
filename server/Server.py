@@ -12,63 +12,49 @@ from optparse import OptionParser
 from sshhandler import shell, sx4itsession
 
 from common import *
-import common.jsonrpc.proxy
+from common.jsonrpc.zmqProxy import zmqREQServiceProxy
 import zmq
 
-#from optparse import OptionParser
-#
-#opts = {}
-#
-#parser = OptionParser()
-#parser.epilog = "Theses option are overwritting the default configuration file ('server.conf'), if no configuration file is present, the server need theses values to be set."
-#parser.add_option("-c", "--controler", dest="controller_number",
-#      help="number of controllers to launch", metavar="NB_CONTROLLER")
-#parser.add_option("-p", "--port", dest="server_port",
-#      help="the port of the server", metavar="PORT_NB")
-#parser.add_option("", "--controller-port", dest="controller_port",
-#      help="the starting port of the controllers", metavar="PORT_NB")
-#parser.add_option("", "--database-port", dest="database_port",
-#      help="database port", metavar="PORT_NB")
-#parser.add_option("", "--database-ip", dest="database_ip",
-#      help="database ip", metavar="IP")
-#parser.add_option("", "--database-user", dest="database_user",
-#      help="database user", metavar="USER")
-#parser.add_option("", "--database-pass", dest="database_pass",
-#      help="database pass", metavar="PASS")
-#parser.add_option("", "--database-name", dest="database_name",
-#      help="database name", metavar="NAME")
-#parser.add_option("", "--database-controller", dest="database_controller",
-#      help="database controller", metavar="controller")
-#
+from optparse import OptionParser
+
+opts = {}
+
+parser = OptionParser()
+parser.epilog = "Theses option are overwritting the default configuration file ('server.conf'), if no configuration file is present, the server need theses values to be set."
+parser.add_option("-c", "--controler", dest="controller_number",
+      help="number of controllers to launch", metavar="NB_CONTROLLER")
+parser.add_option("-d", "--debug", action="store_true", dest="debug",
+      help="Debug mode", metavar="DEBUG", default=False)
+parser.add_option("-p", "--port", dest="server_port",
+      help="the port of the server", metavar="PORT_NB")
+parser.add_option("", "--controller-port", dest="controller_port",
+      help="the starting port of the controllers", metavar="PORT_NB")
+parser.add_option("", "--database-port", dest="database_port",
+      help="database port", metavar="PORT_NB")
+parser.add_option("", "--database-ip", dest="database_ip",
+      help="database ip", metavar="IP")
+parser.add_option("", "--database-user", dest="database_user",
+      help="database user", metavar="USER")
+parser.add_option("", "--database-pass", dest="database_pass",
+      help="database pass", metavar="PASS")
+parser.add_option("", "--database-name", dest="database_name",
+      help="database name", metavar="NAME")
+parser.add_option("", "--database-controller", dest="database_controller",
+      help="database controller", metavar="controller")
+
 try:
   from common.sx4itconf import Sx4itConf
   opts = Sx4itConf.opts
+  opts.addArgsParser(parser)
   print opts
 except Exception as e:
   print "Error !", e
   parser.print_help()
   sys.exit(1)
 
-
-class ControllerProxy(common.jsonrpc.proxy.Proxy):
-  """
-    This class inherit of the jsonrpc proxy and define the __call__ method forwarding the request to the controller process.
-  """
-  def __init__(self):
-
-    portlist = range(int(opts["controller_port"]), int(opts["controller_port"]) + int(opts["controller_number"]))
-    super(ControllerProxy, self).__init__()
-    context = zmq.Context()
-    self.sock = context.socket(zmq.REQ)
-    for port in portlist:
-      self.sock.connect("tcp://127.0.0.1:" + str(port)) #TODO use dynamic IP
-  def __call__(self, *args, **kwargs):
-    postdata = super(ControllerProxy, self).__call__(*args, **kwargs)
-    self.sock.send(postdata)
-    recv = self.sock.recv()
-    return jsonrpc.proxy.analyzeJRPCRes(recv)
-
-controllerProxy = ControllerProxy()
+portlist = range(int(opts["controller_port"]), int(opts["controller_port"]) + int(opts["controller_number"]))
+controllerProxy = zmqREQServiceProxy([ 'tcp://127.0.0.1:' + str(port) for port in portlist ])
+del portlist
 
 def loadkey(key):
   """
@@ -195,7 +181,7 @@ class Server(object):
       this is the port where the controller will be listenning to
 
     """
-    self.proc.append(subprocess.Popen(['./Controller.py', str(port), json.dumps(opts.opts)], stdout=sys.stdout, stderr=sys.stdout))
+    self.proc.append(subprocess.Popen(['4am-controllerd', str(port), json.dumps(opts.opts)], stdout=sys.stdout, stderr=sys.stdout))
   def run(self, portlist):
     """
     This method launch the server and create all the controllers.
@@ -228,7 +214,8 @@ def run():
   """
   try:
     portlist = range(int(opts["controller_port"]), int(opts["controller_port"]) + int(opts["controller_number"]))
-    logging.basicConfig(level=logging.DEBUG)
+    if opts["debug"] == True:
+            logging.basicConfig(level=logging.DEBUG)
     logging.debug("server is listenning port -> %s", int(opts["server_port"]))
     logging.debug("launching controlers -> %s", portlist)
     paramiko.util.log_to_file('sx4it_server.log')

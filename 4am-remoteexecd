@@ -1,0 +1,27 @@
+#!/usr/bin/env python2.7
+'''
+remoteExecuter server.
+It handles the order it receives.
+'''
+
+from __future__ import print_function
+import sys
+import traceback
+import argparse
+import logging
+from remoteExecuter.server import Server
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Server executing orders on\
+remote host through ssh.')
+    parser.add_argument('socketURI', type=str, nargs=1,
+                        help='The zmq URI of the socket to listen on of the\
+form tcp://127.0.0.1:5000')
+    opts = parser.parse_args()
+    logging.basicConfig(level=logging.DEBUG)
+    try:
+        Server.instance().configure(opts.socketURI[0])
+        Server.instance().run()
+    except:
+        print('Failed to start server.', file=sys.stderr)
+        traceback.print_exc()

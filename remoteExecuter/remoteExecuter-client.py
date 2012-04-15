@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
-import zmq
-import call
 import logging
 import os
+import zmq
+from common.jsonrpc import call
 
 class zmqREQServiceProxy(object):
     """
@@ -33,7 +33,7 @@ class zmqREQServiceProxy(object):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     context = zmq.Context()
-    proxy = zmqREQServiceProxy(context, 'tcp://127.0.0.1:5001')
+    proxy = zmqREQServiceProxy(context, 'tcp://127.0.0.1:10000')
     # Stream the remoteHostKeys
     remoteHostKeysFile = os.path.expanduser('~/.4am/known_hosts')
     with open(remoteHostKeysFile) as f:

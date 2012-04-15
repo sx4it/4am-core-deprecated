@@ -6,6 +6,9 @@ class zmqREQServiceProxy(Proxy):
     """
     Basic JSONRPC Proxy using zmq.
     This class inherit of the jsonrpc proxy and define the __call__ method forwarding the request to.
+
+    :serviceURLs:
+        this is a list of the server URLs
     """
     def __init__(self, serviceURLs, zmqContext=None):
         self.__serviceURLs = serviceURLs

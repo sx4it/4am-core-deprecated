@@ -9,6 +9,7 @@ from common.jsonrpc import call
 import ast
 import api
 import database
+from remoteExecuter.proc import Proxy as rEProxy
 
 class Server:
     def __init__(self):
@@ -28,8 +29,11 @@ class Server:
         if self.__configured == True:
             raise RuntimeError("Attempted to reconfigure an already configured instance.")
         self.__port = port
-        self.__configured = True
         self.__dbOpts = databaseOpts
+        self.__socket.bind("tcp://127.0.0.1:" + self.__port)
+        self.db = database.InitSession(self.__dbOpts)
+        self.__configured = True
+        self.rE = rEProxy("tcp://127.0.0.1:" + str(int(self.__port) * 2))
         return True
 
     @staticmethod
@@ -44,7 +48,7 @@ class Server:
     @staticmethod
     def initialized():
         """Returns true if the singleton instance has been created."""
-        return hasattr(IOLoop, "_instance")
+        return hasattr(Server, "_instance")
 
     def run(self):
         """
@@ -57,10 +61,7 @@ class Server:
         if self.__configured != True:
             raise RuntimeError("Can not start an unconfigured Server instance.")
         logging.debug("Launching server controller on port " + self.__port)
-        self.__socket.bind("tcp://127.0.0.1:" + self.__port)
-        self.db = database.InitSession(self.__dbOpts)
         self.__run = True
-        logging.debug("Succesfully launched server controller on port " + self.__port)
         while self.__run:
             b = self.__socket.recv()
             # reload each time for testing :)

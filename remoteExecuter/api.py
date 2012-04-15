@@ -1,19 +1,14 @@
 ## This a test API
 
-from call import Callable
 
 # For Paramiko
 import paramiko
 import socket
-
-import fabric.api
-import fabric.network
-import Server
 import base64
 
-fabric.api.env.no_agent = True
-fabric.api.env.reject_unknown_hosts = True
-fabric.api.env.abort_on_prompts = True
+from remoteExecuter.server import Server
+from common.jsonrpc.call import Callable
+
 
 def verifyKey(hostname, key):
     '''Key is a Pkey paramiko file'''
@@ -21,9 +16,9 @@ def verifyKey(hostname, key):
         raise RuntimeError('The key is not associated with this host')
 
 @Callable
-def getRemoteHostKey(hostname, port=22, key_type='ssh-rsa'):
+def getRemoteHostKey(hostname, port, key_type):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((hostname, port))
+    sock.connect((hostname, int(port)))
     t = paramiko.Transport(sock)
     secopt = t.get_security_options()
     secopt._set_key_types([key_type])
@@ -34,22 +29,21 @@ def getRemoteHostKey(hostname, port=22, key_type='ssh-rsa'):
     return res
 
 @Callable
-def addUser(userToAdd, userToConnect, key, hostname, port=22):
-    if keytype == 'ssh-rsa': 
-        key = paramiko.RSAKey(data=base64.decodestring(key)) 
-    elif keytype == 'ssh-dss': 
-        key = paramiko.DSSKey(data=base64.decodestring(key)) 
+def cmdExec(cmd, userToConnect, hostname, pkey, port, remoteKeyType, authKeyType):
+    if authKeyType == 'ssh-rsa': 
+        pkey = paramiko.RSAKey(data=base64.decodestring(pkey)) 
+    elif authKeyType == 'ssh-dss': 
+        pkey = paramiko.DSSKey(data=base64.decodestring(pkey)) 
     else:
         raise RuntimeError('Invalid key type.')
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((hostname, port))
     t = paramiko.Transport(sock)
     # FIXME: The remote key type is hard coded
-    t.connect(hostkey=Server.remoteHostKeys[hostname]['ssh-rsa'], username=userToConnect, pkey=key)
+    t.connect(hostkey=Server.instance().remoteHostKeys[hostname][remotekeyType], username=userToConnect, pkey=pkey)
     chan = t.open_session() 
     chan.set_combine_stderr(True)
-    ## FIXME: We should make some check to prevent shell command injection
-    chan.exec_command("useradd -m {0}".format(userToAdd)) 
+    chan.exec_command(cmd) 
     chan.shutdown_write()
     res = ''
     while True:
@@ -64,32 +58,41 @@ def addUser(userToAdd, userToConnect, key, hostname, port=22):
     t.close()
     return res
 
+try:
+    import fabric.api
+    import fabric.network
+    fabric.api.env.no_agent = True
+    fabric.api.env.reject_unknown_hosts = True
+    fabric.api.env.abort_on_prompts = True
 
-@Callable
-def addUserFab(userToAdd, userToConnect, keyFile, hostname, port=22):
-    '''On debian '''
-    fabric.api.env.host_string = hostname + ':' + str(port)
-    fabric.api.env.user = userToConnect
-    fabric.api.env.key_filename = keyFile
-    return fabric.api.run()
+    @Callable
+    def addUserFab(userToAdd, userToConnect, keyFile, hostname, port=22):
+        '''On debian '''
+        fabric.api.env.host_string = hostname + ':' + str(port)
+        fabric.api.env.user = userToConnect
+        fabric.api.env.key_filename = keyFile
+        return fabric.api.run()
+    
+    @Callable
+    def delUserFab(userToDel, userToConnect, keyFile, hostname, port=22):
+        '''On debian '''
+        fabric.api.env.host_string = hostname + ':' + str(port)
+        fabric.api.env.user = userToConnect
+        fabric.api.env.key_filename = keyFile
+        ## We should make some check to prevent shell command injection
+        return fabric.api.run("deluser --backup --quiet --remove-home {0}".format(userToDel))
 
-@Callable
-def delUserFab(userToDel, userToConnect, keyFile, hostname, port=22):
-    '''On debian '''
-    fabric.api.env.host_string = hostname + ':' + str(port)
-    fabric.api.env.user = userToConnect
-    fabric.api.env.key_filename = keyFile
-    ## We should make some check to prevent shell command injection
-    return fabric.api.run("deluser --backup --quiet --remove-home {0}".format(userToDel))
+except:
+    print 'No fabric support'
 
 
 @Callable
 def reloadRemoteHostKeysFromFile(filename=None):
     '''Can be useful for debugging'''
     if filename is None:
-        filename = Server.remoteHostKeysFile
-    Server.remoteHostKeys.clear()
-    Server.remoteHostKeys.load(filename)
+        filename = Server.instance().remoteHostKeysFile
+    Server.instance().remoteHostKeys.clear()
+    Server.instance().remoteHostKeys.load(filename)
 
 @Callable
 def addRemoteHostKey(hostname, keytype, key):
@@ -102,7 +105,7 @@ def addRemoteHostKey(hostname, keytype, key):
         key = paramiko.DSSKey(data=base64.decodestring(key)) 
     else:
         raise RuntimeError('Invalid key type.')
-    Server.remoteHostKeys.add(hostname, keytype, key)
+    Server.instance().remoteHostKeys.add(hostname, keytype, key)
     return True
 
 @Callable
@@ -113,9 +116,9 @@ def delRemoteHostKey(hostname):
     It seems that it's mandatory to manipulate directly the _entries var.
     '''
     i = 0
-    for e in Server.remoteHostKeys._entries: 
+    for e in Server.instance().remoteHostKeys._entries: 
         if (hostname in e.hostnames):
-            Server.remoteHostKeys._entries.pop(i)
+            Server.instance().remoteHostKeys._entries.pop(i)
             break
         i += 1
     return True
@@ -123,6 +126,6 @@ def delRemoteHostKey(hostname):
 @Callable
 def dumpRemoteHostKey():
     '''Debug function'''
-    for i in Server.remoteHostKeys:
-        print i, Server.remoteHostKeys[i]
+    for i in Server.instance().remoteHostKeys:
+        print i, Server.instance().remoteHostKeys[i]
     return True

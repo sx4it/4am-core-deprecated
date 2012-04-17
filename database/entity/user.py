@@ -8,7 +8,7 @@ from associationTable import userGroup_Has_User_Table
 
 class User(Base):
     __tablename__ = 'user'
-    
+
     id = Column(Integer, primary_key=True)
     firstname = Column(String(255))
     lastname = Column(String(255))
@@ -17,7 +17,7 @@ class User(Base):
     registerdate = Column(DateTime, nullable=False, default=datetime.now())
     activedate  = Column(DateTime, nullable=True)
     unactivatedate = Column(DateTime, nullable=True)
-    
+
     # @OneToMany : UserKey <--> User
     # userkey
 

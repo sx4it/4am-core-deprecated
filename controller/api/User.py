@@ -5,10 +5,10 @@ Manipulation of the user representations
 import logging
 import pprint
 import StringIO
+from common.jsonrpc.call import Callable
 from controller.server import Server
 from database.entity import user
 from database.entity import userKey
-from common.jsonrpc import call
 
 #TODO move to common api fct & delete later
 def pprinttable(rows):
@@ -41,7 +41,7 @@ def pprinttable(rows):
   return out.getvalue()
 
 
-@call.Callable
+@Callable
 def list(*param, **dic):
   """
   api.list list all users
@@ -53,7 +53,7 @@ def list(*param, **dic):
     tab.append((str(b.id), b.firstname, b.lastname, b.email))
   return pprinttable(tab)
 
-@call.Callable
+@Callable
 def add(*param, **dic):
   """
   api.add a new user in database
@@ -81,7 +81,7 @@ def add(*param, **dic):
     return True
   return False
 
-@call.Callable
+@Callable
 def delete(*param, **dic):
   """
   User.delete [name=USERNAME]
@@ -102,7 +102,7 @@ def delete(*param, **dic):
     return delete.__doc__
   return "%s has been delete !"%(name)
 
-@call.Callable
+@Callable
 def checkPassFromUsername(*username, **dic):
   try:
     if dic.get("user") is None:
@@ -118,7 +118,7 @@ def checkPassFromUsername(*username, **dic):
     return False
   return False
 
-@call.Callable
+@Callable
 def getKeyFromUsername(*username, **dic):
   if dic.get("user") is None:
     return ""

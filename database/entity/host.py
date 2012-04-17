@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
 from database.base import Base
@@ -12,7 +12,8 @@ class Host(Base):
 
     id = Column(Integer, primary_key=True)
     hostname = Column(String(255))
-    ip = Column(Integer)
+    ip = Column(BigInteger)
+    port = Column(String(255))
     port = Column(Integer)
     mgmtusername = Column(String(255))
 
@@ -30,7 +31,7 @@ class Host(Base):
     # ManyToMany : Host <--> HostGroup
     hostgroup = relationship("HostGroup", secondary=hostGroup_Has_Host_Table, backref="host")
 
-    def __init__(self, hostname, ip, port, mgmtusername=None):
+    def __init__(self, hostname, ip, port, mgmtusername):
         self.hostname = hostname
         self.ip = ip
         self.port = port

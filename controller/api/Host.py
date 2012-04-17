@@ -7,7 +7,8 @@ import traceback
 import StringIO
 from common.jsonrpc.call import Callable
 from controller.server import Server
-from database.entity import host, hostKey
+from database.entity import host
+from database.entity import hostKey
 from User import pprinttable
 
 @Callable
@@ -35,8 +36,8 @@ def add(*param, **dic):
     if dic.get("hostname") is None:
         return "No hostname given."
     try:
-        host = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
-        if host:
+        host1 = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
+        if host1:
             return "%s already exist."%dic.get("hostname")
     except:
         return "ERROR: %s cannot check existing hostname."%dic.get("hostname")
@@ -51,10 +52,10 @@ def add(*param, **dic):
 #    Server.instance().rE.addRemoteHostKey(dic.get("ip"), hostKeyType, remoteKey)
 
     # Add new host and his key in database
-    host = host.Host(dic.get("hostname"), dic.get("ip"), dic.get("port"), dic.get("mgmtusername"))
+    host1 = host.Host(dic.get("hostname"), dic.get("ip"), dic.get("port"), dic.get("mgmtusername"))
+    host1.hostKey = [hostKey.HostKey(dic.get("hostkey"), hostKeyType)]
     try:
-        host.hostKey = [hostKey.HostKey(dic.get("hostkey"), hostKeyType)]
-        Server.instance().db._hostRequest.addHost(user)
+        Server.instance().db._hostRequest.addHost(host1)
     except:
         return "ERROR: %s failed to be added."%dic.get("hostname")
     return "%s has been successfully added!"%dic.get("hostname")

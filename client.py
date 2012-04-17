@@ -14,6 +14,8 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("", "--user-key", dest="user_key",
                   help="client private key path", metavar="USER_KEY_PATH", default="~/.ssh/id_rsa")
+parser.add_option("", "--password", dest="password",
+                  help="client private key password", default=None)
 parser.add_option("-p", "--port", dest="port", type="int",
                   help="port of the client", metavar="PORT", default=2200)
 parser.add_option("-a", "--addr", dest="ip",
@@ -29,7 +31,9 @@ class Client:
     #po = paramiko.WarningPolicy()  Keep that ?
     po = paramiko.MissingHostKeyPolicy()
     self.client.set_missing_host_key_policy(po)
-    self.client.connect(option['host'], option['port'], option['user'], pkey=loadkey(os.path.expanduser(option['key_path'])))
+    self.client.connect(option['host'], option['port'], option['user'],
+      password=option['password'],
+      key_filename=os.path.expanduser(option['key_path']))
     self.chan = self.client.get_transport().open_channel('sx4it_command')
   def __call__(self, args):
 # put an id into jsonrpc requests
@@ -57,7 +61,8 @@ if __name__ == "__main__":
   #logging.basicConfig(level=logging.DEBUG)
   try:
     (options, args) = parser.parse_args()
-    client = Client(host=options.ip, port=options.port, user=os.getenv('USER'), key_path=options.user_key)
+    client = Client(host=options.ip, port=options.port, user=os.getenv('USER'),
+      key_path=options.user_key, password=options.password)
     print client(args)
   except call.JRPCError as error:
     print "Fatal Error:"

@@ -14,7 +14,6 @@ class Host(Base):
     hostname = Column(String(255))
     ip = Column(BigInteger)
     port = Column(String(255))
-    port = Column(Integer)
     mgmtusername = Column(String(255))
 
     # OneToMany : HostKey <--> Host

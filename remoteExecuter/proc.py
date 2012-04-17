@@ -20,7 +20,7 @@ class Proxy(zmqREQServiceProxy):
         http://mail.python.org/pipermail/python-list/2008-April/536949.html
         '''
         try:
-            self.__proc = subprocess.Popen(['4am-remoteexecd', socketurl],
+            self.__proc = subprocess.Popen(['./4am-remoteexecd', socketurl],
                         stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
         except:
             print('Unables to create the process, is the PATH correct ?'\

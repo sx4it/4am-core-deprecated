@@ -11,8 +11,8 @@ class Host(Base):
     __tablename__ = 'host'
 
     id = Column(Integer, primary_key=True)
-    ip = Column(Integer)
     hostname = Column(String(255))
+    ip = Column(Integer)
     port = Column(Integer)
     mgmtusername = Column(String(255))
 
@@ -30,9 +30,9 @@ class Host(Base):
     # ManyToMany : Host <--> HostGroup
     hostgroup = relationship("HostGroup", secondary=hostGroup_Has_Host_Table, backref="host")
 
-    def __init__(self, ip, hostname, port, mgmtusername):
-        self.ip = ip
+    def __init__(self, hostname, ip, port, mgmtusername=None):
         self.hostname = hostname
+        self.ip = ip
         self.port = port
         self.mgmtusername = mgmtusername
 

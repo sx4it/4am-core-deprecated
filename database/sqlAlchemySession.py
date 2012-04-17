@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-import base 
+import base
 
 from entity import *
 from request import *
@@ -14,7 +14,8 @@ class SqlAlchemySession:
 
     def __init__(self, host):
 
-        print sqlalchemy.__version__
+        # Check version
+        #print sqlalchemy.__version__
 
         # Create engine
         self._engine = create_engine(host, echo = False)

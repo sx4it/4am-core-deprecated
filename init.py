@@ -56,6 +56,6 @@ user1 = user.User(firstname, lastname, mail, password)
 user1.userkey = [userKey.UserKey(key, 'type')]
 
 if db_session._userRequest.addUser(user1) == True:
-  print "Suceed."
+  print "Succeed."
 else:
   print "Failed !!! (userkey already in db ?)"

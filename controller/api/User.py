@@ -1,5 +1,5 @@
 """
-test api for autocomplete generation
+Manipulation of the user representations
 """
 
 import logging
@@ -10,6 +10,7 @@ from database.entity import user
 from database.entity import userKey
 from common.jsonrpc import call
 
+#TODO move to common api fct & delete later
 def pprinttable(rows):
   out = StringIO.StringIO()
   if len(rows) > 1:

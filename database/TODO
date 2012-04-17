@@ -6,3 +6,7 @@ Eager on some object
 Cascade on delete for orphan object
 
 Return status ok/ko on commit
+
+
+TO REMEMBER:
+user : Mandatory login, lastname, password but not firstname

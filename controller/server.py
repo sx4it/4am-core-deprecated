@@ -47,7 +47,9 @@ class Server:
 
     @staticmethod
     def initialized():
-        """Returns true if the singleton instance has been created."""
+        """
+        Returns true if the singleton instance has been created.
+        """
         return hasattr(Server, "_instance")
 
     def run(self):

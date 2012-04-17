@@ -173,6 +173,7 @@ class Server(object):
     self.sock.bind(('', port))
     self.sock.listen(100)
     self.proc = []
+
   def LaunchController(self, port):
     """
     This allow us to launch the child controller process.
@@ -181,7 +182,8 @@ class Server(object):
       this is the port where the controller will be listenning to
 
     """
-    self.proc.append(subprocess.Popen(['4am-controllerd', str(port), json.dumps(opts.opts)], stdout=sys.stdout, stderr=sys.stdout))
+    self.proc.append(subprocess.Popen(['./4am-controllerd', str(port), json.dumps(opts.opts)], stdout=sys.stdout, stderr=sys.stdout))
+
   def run(self, portlist):
     """
     This method launch the server and create all the controllers.

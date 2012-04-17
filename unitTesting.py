@@ -33,7 +33,7 @@ class Client(proxy.Proxy):
 
 class sshdTest(unittest.TestCase):
     @classmethod
-    def setUpClass(cls): 
+    def setUpClass(cls):
         cls.client = Client(host=options.ip, port=options.port, user=os.getenv('USER'), key=os.getenv('KEYPATH'))
     @classmethod
     def tearDownClass(cls):
@@ -42,14 +42,18 @@ class sshdTest(unittest.TestCase):
 class hostTest(sshdTest):
     def testHost0AddCommand(self):
         """
-        testing Add User Command
+        testing Add Host Command
         """
-        self.assertEqual(self.client.Host.add(name='dev2', ip='dev2.sx4it.com'), True)
-        self.assertEqual(self.client.Host.add(name='dev2', ip='dev2.sx4it.com', port='22'), True)
-        self.assertEqual(self.client.Host.add(name='dev2', ip='dev2.sx4it.com', port='22', HostKeyType='ssh-rsa'), True)
-        self.assertEqual(self.client.Host.add(name='dev2', ip='dev2.sx4it.com', port='22', HostKeyType='ssh-rsa', HostKey="AAAAB3NzaC1yc2EAAAADAQABAAABAQDsOf4y6JsvLA7Nzkn9aPFpYhMRWoQ4lHZiSeKxYYx6ZVlIxQmSQVE7PIEAnTV7kZOHAv3Hu4oMKOGYAB8R8YQxB83T4ScKf9+zO0oTTQYrjZcS/SBmz9F5LwDvzP6Zf6Y7ASBQ6BWhonG7pRkLw0k3A/QJy8cxb4W7ODuSJqaJz925a0qa+r/zajeadc8XyhIY59p3X0FqLjfRRC5kDfJ4qRQ7dJ36yCOBvEmDYXKhiGHm/UyUATXP6rzvPqgvKPkdFImqrn8l+Tq/2HdPYtv3GH/yOxXFKO1t60J0Q3NLDlXgQ4qQla/FHN3fnqitXkeRb/S/Q6Ori/2Dhoujzxql"), True)
-        with self.assertRaises(call.JRPCError):
-                self.client.Host.add(name='dev2', ip='dev2.sx4it.com', port='22', HostKeyType='ssh-rsa', HostKey="gdfsgfsdfsAAAAB3NzaC1yc2EAAAADAQABAAABAQDsOf4y6JsvLA7Nzkn9aPFpYhMRWoQ4lHZiSeKxYYx6ZVlIxQmSQVE7PIEAnTV7kZOHAv3Hu4oMKOGYAB8R8YQxB83T4ScKf9+zO0oTTQYrjZcS/SBmz9F5LwDvzP6Zf6Y7ASBQ6BWhonG7pRkLw0k3A/QJy8cxb4W7ODuSJqaJz925a0qa+r/zajeadc8XyhIY59p3X0FqLjfRRC5kDfJ4qRQ7dJ36yCOBvEmDYXKhiGHm/UyUATXP6rzvPqgvKPkdFImqrn8l+Tq/2HdPYtv3GH/yOxXFKO1t60J0Q3NLDlXgQ4qQla/FHN3fnqitXkeRb/S/Q6Ori/2Dhoujzxql")
+        # Adding without port sould raise an error"
+        self.assertEqual(self.client.Host.add(hostname='dev2', ip='dev2.sx4it.com'), "Ip and port of the host must be given.")
+        # Adding without an hostkey should raise an error"
+        self.assertEqual(self.client.Host.add(hostname='dev2', ip='dev2.sx4it.com', port='22'), "An hostKey must be given.")
+#        self.assertEqual(self.client.Host.add(hostname='dev2', ip='dev2.sx4it.com', port='22', mgmtusername="josette", hostkeytype='ssh-rsa', hostkey="AAAAB3NzaC1yc2EAAAADAQABAAABAQDsOf4y6JsvLA7Nzkn9aPFpYhMRWoQ4lHZiSeKxYYx6ZVlIxQmSQVE7PIEAnTV7kZOHAv3Hu4oMKOGYAB8R8YQxB83T4ScKf9+zO0oTTQYrjZcS/SBmz9F5LwDvzP6Zf6Y7ASBQ6BWhonG7pRkLw0k3A/QJy8cxb4W7ODuSJqaJz925a0qa+r/zajeadc8XyhIY59p3X0FqLjfRRC5kDfJ4qRQ7dJ36yCOBvEmDYXKhiGHm/UyUATXP6rzvPqgvKPkdFImqrn8l+Tq/2HdPYtv3GH/yOxXFKO1t60J0Q3NLDlXgQ4qQla/FHN3fnqitXkeRb/S/Q6Ori/2Dhoujzxql"), True)
+        # Adding a existing hostname should be false
+ #       self.assertEqual(self.client.Host.add(hostname='dev2', ip='totoland.com', port='88'), False)
+  #      self.assertEqual(self.client.Host.add(hostname='dev2', ip='dev2.sx4it.com', port='22', hostkeytype='ssh-rsa', hostkey="AAAAB3NzaC1yc2EAAAADAQABAAABAQDsOf4y6JsvLA7Nzkn9aPFpYhMRWoQ4lHZiSeKxYYx6ZVlIxQmSQVE7PIEAnTV7kZOHAv3Hu4oMKOGYAB8R8YQxB83T4ScKf9+zO0oTTQYrjZcS/SBmz9F5LwDvzP6Zf6Y7ASBQ6BWhonG7pRkLw0k3A/QJy8cxb4W7ODuSJqaJz925a0qa+r/zajeadc8XyhIY59p3X0FqLjfRRC5kDfJ4qRQ7dJ36yCOBvEmDYXKhiGHm/UyUATXP6rzvPqgvKPkdFImqrn8l+Tq/2HdPYtv3GH/yOxXFKO1t60J0Q3NLDlXgQ4qQla/FHN3fnqitXkeRb/S/Q6Ori/2Dhoujzxql"), True)
+   #     with self.assertRaises(call.JRPCError):
+#                self.client.Host.add(hostname='dev2', ip='dev2.sx4it.com', port='22', hostkeyype='ssh-rsa', hostkey="gdfsgfsdfsAAAAB3NzaC1yc2EAAAADAQABAAABAQDsOf4y6JsvLA7Nzkn9aPFpYhMRWoQ4lHZiSeKxYYx6ZVlIxQmSQVE7PIEAnTV7kZOHAv3Hu4oMKOGYAB8R8YQxB83T4ScKf9+zO0oTTQYrjZcS/SBmz9F5LwDvzP6Zf6Y7ASBQ6BWhonG7pRkLw0k3A/QJy8cxb4W7ODuSJqaJz925a0qa+r/zajeadc8XyhIY59p3X0FqLjfRRC5kDfJ4qRQ7dJ36yCOBvEmDYXKhiGHm/UyUATXP6rzvPqgvKPkdFImqrn8l+Tq/2HdPYtv3GH/yOxXFKO1t60J0Q3NLDlXgQ4qQla/FHN3fnqitXkeRb/S/Q6Ori/2Dhoujzxql")
 
 
 class userTest(sshdTest):

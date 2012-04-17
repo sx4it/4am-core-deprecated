@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 import sqlalchemy
 from sqlalchemy import *
@@ -17,6 +17,18 @@ class HostRequest():
         ret = self._session.query(host.Host).filter_by(id=sid).one()
         return ret
 
+    # Get the host object associated to the given hostname
+    def getHostByHostname(self, name):
+        ret = self._session.query(host.Host).filter_by(hostname=name)
+        if ret.count() == 0:
+            return None
+        return ret
+
+    # Get all host
+    def getAllHost(self):
+        ret = self._session.query(host.Host).all()
+        return ret
+
     # Add the given Host mapped object to the database
     def addHost(self, host):
         self._session.add(host)
@@ -27,8 +39,9 @@ class HostRequest():
         ret = self._session.query(host.Host).filter_by(id=sid).one()
         self._session.delete(ret)
         self._session.commit()
-        
+
     # Delete the given Host mapped object from the database
     def removeHost(self, host):
         self._session.delete(host)
         self._session.commit()
+

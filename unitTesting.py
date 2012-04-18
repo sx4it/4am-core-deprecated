@@ -55,6 +55,18 @@ class hostTest(sshdTest):
 #        with self.assertRaises(call.JRPCError):
 #                self.client.Host.add(hostname='dev2', ip='dev2.sx4it.com', port='22', hostkeyype='ssh-rsa', hostkey="gdfsgfsdfsAAAAB3NzaC1yc2EAAAADAQABAAABAQDsOf4y6JsvLA7Nzkn9aPFpYhMRWoQ4lHZiSeKxYYx6ZVlIxQmSQVE7PIEAnTV7kZOHAv3Hu4oMKOGYAB8R8YQxB83T4ScKf9+zO0oTTQYrjZcS/SBmz9F5LwDvzP6Zf6Y7ASBQ6BWhonG7pRkLw0k3A/QJy8cxb4W7ODuSJqaJz925a0qa+r/zajeadc8XyhIY59p3X0FqLjfRRC5kDfJ4qRQ7dJ36yCOBvEmDYXKhiGHm/UyUATXP6rzvPqgvKPkdFImqrn8l+Tq/2HdPYtv3GH/yOxXFKO1t60J0Q3NLDlXgQ4qQla/FHN3fnqitXkeRb/S/Q6Ori/2Dhoujzxql")
 
+    def testHost1UpdateCommand(self):
+      # Adding without port sould raise an error"
+      self.assertEqual(self.client.Host.update(hostname='dev18'), "dev18 does not exist.")
+      self.assertEqual(self.client.Host.update(hostname='dev2', password="qwerty"), "dev2 has been updated!")
+
+    def testHost2AddKeyToHostCommand(self):
+      # Adding without port sould raise an error"
+      self.assertEqual(self.client.Host.addKeyToHost(hostname='dev2', hostkeytype='ssh-rsa', hostkey="AAAAB3NzaCCCC2EAAAADAQABAAABAQDsOf4y6JsvLA7Nzkn9aPFpYhMRWoQ4lHZiSeKxYYx6ZVlIxQmSQVE7PIEAnTV7kZOHAv3Hu4oMKOGYAB8R8YQxB83T4ScKf9+zO0oTTQYrjZcS/SBmz9F5LwDvzP6Zf6Y7ASBQ6BWhonG7pRkLw0k3A/QJy8cxb4W7ODuSJqaJz925a0qa+r/zajeadc8XyhIY59p3X0FqLjfRRC5kDfJ4qRQ7dJ36yCOBvEmDYXKhiGHm/UyUATXP6rzvPqgvKPkdFImqrn8l+Tq/2HdPYtv3GH/yOxXFKO1t60J0Q3NLDlXgQ4qQla/FHN3fnqitXkeRb/S/Q6Ori/2Dhoujzxql"), "dev2 key's successfully added!")
+
+    def testHost3DeleteCommand(self):
+      self.assertEqual(self.client.Host.delete(hostname='dev2'), "dev2 has been successfully deleted!")
+      self.assertEqual(self.client.Host.delete(hostname='dev2'), "dev2 does not exist.")
 
 class userTest(sshdTest):
     def testUser0AddCommand(self):

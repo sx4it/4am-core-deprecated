@@ -5,6 +5,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import *
 
 from database.entity import host
+from database.entity import hostKey
 
 # A class to perform transaction with 'host' table
 class HostRequest():
@@ -19,9 +20,7 @@ class HostRequest():
 
     # Get the host object associated to the given hostname
     def getHostByHostname(self, name):
-        ret = self._session.query(host.Host).filter_by(hostname=name)
-        if ret.count() == 0:
-            return None
+        ret = self._session.query(host.Host).filter_by(hostname=name).first()
         return ret
 
     # Get all host
@@ -33,6 +32,14 @@ class HostRequest():
     def addHost(self, host):
         self._session.add(host)
         self._session.commit()
+
+
+
+    # Add the given Host mapped object to the database
+    def updateHost(self, host):
+        self._session.update(host)
+        self._session.commit()
+
 
     # Delete the host column associated to the given ig
     def removeHostById(self, sid):

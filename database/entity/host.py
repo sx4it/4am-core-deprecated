@@ -12,12 +12,12 @@ class Host(Base):
 
     id = Column(Integer, primary_key=True)
     hostname = Column(String(255))
-    ip = Column(BigInteger)
+    ip = Column(String(255))
     port = Column(String(255))
     mgmtusername = Column(String(255))
 
     # OneToMany : HostKey <--> Host
-    # /
+    # hostkey
 
     # OneToOne : Host --> Template
     template_id = Column(Integer, ForeignKey('template.id'))
@@ -30,7 +30,7 @@ class Host(Base):
     # ManyToMany : Host <--> HostGroup
     hostgroup = relationship("HostGroup", secondary=hostGroup_Has_Host_Table, backref="host")
 
-    def __init__(self, hostname, ip, port, mgmtusername):
+    def __init__(self, hostname, ip, port, mgmtusername=None):
         self.hostname = hostname
         self.ip = ip
         self.port = port

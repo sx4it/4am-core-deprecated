@@ -10,6 +10,7 @@ from controller.server import Server
 from database.entity import host
 from database.entity import hostKey
 from User import pprinttable
+import sys
 
 @Callable
 def add(*param, **dic):
@@ -40,7 +41,7 @@ def add(*param, **dic):
         if host1:
             return "%s already exist."%dic.get("hostname")
     except:
-        return "ERROR: %s cannot check existing hostname."%dic.get("hostname")
+        return "ERROR => Failed to retrieve host %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
 
 #    try:
 #        remoteKey = Server.instance().rE.getRemoteHostKey(dic.get("ip"), dic.get("port"), hostKeyType)
@@ -57,7 +58,7 @@ def add(*param, **dic):
     try:
         Server.instance().db._hostRequest.addHost(host1)
     except:
-        return "ERROR: %s failed to be added."%dic.get("hostname")
+        return "ERROR => Failed to add %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
     return "%s has been successfully added!"%dic.get("hostname")
 
 @Callable
@@ -65,17 +66,17 @@ def addKeyToHost(*param, **dic):
     """
     Add a key and keyType to the given host
     """
-    if dic.get("hostname") is None or dic.get("hkkey") is None or dic.get("hktype") is None:
+    if dic.get("hostname") is None or dic.get("hostkey") is None or dic.get("hostkeytype") is None:
         return "All hostname, host key and key type must be given."
     try:
-        host = Server.instance().db._hostRequest.getHostByHostname(hostname)
-        if not host:
-            return "%s does not exist."%hostname
-        host.hostKey.append(hostKey.HostKey(dic.get("hkkey"), dic.get("hktype")))
-        Server.instance().db._hostRequest.addHost(host)
+        host1 = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
+        if not host1:
+            return "%s does not exist."%dic.get("hostname")
+        host1.hostkey.append(hostKey.HostKey(dic.get("hostkey"), dic.get("hostkeytype")))
+        Server.instance().db._hostRequest.addHost(host1)
     except:
-        return "ERROR: %s key's failed to be updated."%hostname
-    return "%s key's successfully added!"%hostname
+        return "ERROR => Failed to add key to host %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
+    return "%s key's successfully added!"%dic.get("hostname")
 
 @Callable
 def delete(*param, **dic):
@@ -84,16 +85,23 @@ def delete(*param, **dic):
     """
     if dic.get("hostname") is None:
         return "No hostname given."
-    hostname = dic.get("hostname")
     try:
-        host = Server.instance().db._hostRequest.getHostByHostname(hostname)
-        if not host:
-            return "%s does not exist."%hostname
-        Server.instance().db._hostRequest.removeHost(host)
+        host1 = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
+        if not host1:
+            return "%s does not exist."%dic.get("hostname")
+        Server.instance().db._hostRequest.removeHost(host1)
     except:
-        return "ERROR: %s cannot be delete."%hostname
-    return "%s has been successfully delete!"%(hostname)
+        return "ERROR => Failed to delete host %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
+    return "%s has been successfully deleted!"%dic.get("hostname")
 
+@Callable
+def deleteKey(*param, **dic):
+    """
+    delete an hostkey using the given hostname and keyid
+    """
+    return "Not implemented... yet."
+
+@Callable
 def update(*param, **dic):
     """
     update an host
@@ -113,7 +121,7 @@ def update(*param, **dic):
             host.ip = dic.get("mgmtusername")
         Server.instance().db._hostRequest.addHost(host)
     except:
-        return "ERROR: %s failed to be updated."%hostname
+        return "ERROR => Failed to update host %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
     return "%s has been updated!"%(hostname)
 
 @Callable
@@ -151,14 +159,14 @@ def getHostFromKey(*param, **dic):
     """
     Get an Host from the given key
     """
-    print "Not implemented... yet."
+    return "Not implemented... yet."
 
 @Callable
 def getKeysFromHostame(*param, **dic):
     """
     Get all keys  associated to the given hostname
     """
-    print "Not implemented... yet."
+    return "Not implemented... yet."
 
 #@Callable
 #def takeControl(hostname=None, username=None, password=None, policy='default')

@@ -4,7 +4,7 @@ Manipulation of the host representations
 
 import logging
 import traceback
-import StringIO
+import StringIO # rmv when delete print
 from common.jsonrpc.call import Callable
 from controller.server import Server
 from database.entity import host
@@ -99,12 +99,23 @@ def deleteKey(*param, **dic):
     """
     delete an hostkey using the given hostname and keyid
     """
-    return "Not implemented... yet."
+    if dic.get("hostkey") is None:
+        return "No hostname given."
+    try:
+#        key1 = Server.instance().db._
+        host1 = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
+#        if not host1:
+#            return "%s does not exist."%dic.get("hostname")
+#        Server.instance().db._hostRequest.removeHost(09host1)
+    except:
+        return "ERROR => Failed to delete hostkey host %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
+    return "%s has been successfully deleted!"%dic.get("hostname")
+
 
 @Callable
 def update(*param, **dic):
     """
-    update an host
+    Update an host
     """
     if dic.get("hostname") is None:
         return "No hostname given."

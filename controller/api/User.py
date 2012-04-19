@@ -4,7 +4,7 @@ Manipulation of the user representations
 
 import logging
 import pprint
-import StringIO
+import StringIO # rmv when del print
 from common.jsonrpc.call import Callable
 from controller.server import Server
 from database.entity import user
@@ -39,19 +39,6 @@ def pprinttable(rows):
     for i in range(len(row)):
       print >> out, "%*s = %s" % (hwidth,row[i],row[i])
   return out.getvalue()
-
-
-@Callable
-def list(*param, **dic):
-  """
-  api.list list all users
-  """
-  users = Server.instance().db._userRequest.getAllUser()
-  s = StringIO.StringIO()
-  tab = [("id", "firtname", "lastname", "email")]
-  for b in users:
-    tab.append((str(b.id), b.firstname, b.lastname, b.email))
-  return pprinttable(tab)
 
 @Callable
 def add(*param, **dic):
@@ -134,3 +121,15 @@ def getKeyFromUsername(*username, **dic):
     return ""
   logging.debug("getKeyFromUsername-> %s", keys)
   return keys
+
+@Callable
+def list(*param, **dic):
+  """
+  api.list list all users
+  """
+  users = Server.instance().db._userRequest.getAllUser()
+  s = StringIO.StringIO()
+  tab = [("id", "firtname", "lastname", "email")]
+  for b in users:
+    tab.append((str(b.id), b.firstname, b.lastname, b.email))
+  return pprinttable(tab)

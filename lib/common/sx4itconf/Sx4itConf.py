@@ -1,4 +1,5 @@
 import ConfigParser
+import os
 
 class UsageException(BaseException):
   """
@@ -10,14 +11,14 @@ class UsageException(BaseException):
   def __str__(self):
     return "No %s used, check your server.conf or your command line."%str(self.key)
 
-class ArgsAndFileParser(object):
+class ArgsAndFileParser:
   """
   A simple config file parser, that allow to override the config with command line options.
   """
-  def __init__(self):
+  def __init__(self, configFile):
     self.opts = {}
     config = ConfigParser.RawConfigParser()
-    config.read("server.conf")
+    config.read(configFile)
     self.loadItemsFromSection(config, "server")
     self.loadItemsFromSection(config, "controller")
     self.loadItemsFromSection(config, "database")
@@ -44,4 +45,4 @@ class ArgsAndFileParser(object):
       d[section + "_" + b[0]] = b[1]
     self.opts = dict(self.opts.items() + d.items())
 
-opts = ArgsAndFileParser()
+opts = ArgsAndFileParser(os.path.expanduser('~/.4am.conf'))

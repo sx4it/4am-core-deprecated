@@ -2,5 +2,5 @@
 
 ABSPATH=$(cd `dirname $BASH_SOURCE` && pwd)
 
-export PYTHONPATH=${PYTHONPATH}:$ABSPATH
-export PATH=${PATH}:${ABSPATH}
+export PYTHONPATH=${PYTHONPATH}:${ABSPATH}/lib
+export PATH=${PATH}:${ABSPATH}/bin

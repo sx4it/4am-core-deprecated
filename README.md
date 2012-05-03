@@ -1,41 +1,31 @@
-# TODO before launching the server
+# Installation
 
-* Before running client.py, push your user public key with init.py.
-
-
-# Deployment
-
-## Usage
+The script deploy.sh at the root of the repository takes care of the installation of the server.
+The server is installed under a new user called 4am and a specific version of Python is installed and compiled.
 
 ```
-#!/bin/sh
-
-set -e
-
-echo "Updating the system."
-apt-get update && apt-get dist-upgrade
-
-echo "Installing some interesting package."
-apt-get install git python-crypto python-support python build-essential \
-python-pip python-paramiko uuid-dev python-dev libmysqlclient-dev mysql-server -y
-
-echo "Downloading and compiling zeromq."
-wget http://download.zeromq.org/zeromq-2.1.10.tar.gz
-tar xzvf zeromq-2.1.10.tar.gz
-cd zeromq-2.1.10
-./configure
-make
-make install
-cd -
-rm -rf zeromq-2.1.10
-rm zeromq-2.1.10.tar.gz
-echo "zeromq installed."
-
-echo "Installing some required python packages."
-pip install pyzmq sqlalchemy MySQL-python
-
-git clone git://github.com/sx4it/4am-core.git
-cd 4am-core/
-git checkout experimental
-ssh-keygen -b 2048 -t rsa -f ${HOME}/.ssh/id_rsa -N ""
+wget --no-check-certificate https://raw.github.com/sx4it/4am-core/experimental/deploy.sh
+bash deploy.sh
 ```
+
+# Launching the server
+
+* Take the role of the 4am user
+```
+su - 4am
+```
+
+* Copy the sample confirmation file and customize it if needed
+```
+cp 4am-core/4am.conf.sample ~/.4am.conf
+```
+
+* Push your user public key with 4am-init
+```
+4am-init --key-path id-mykey.pub
+```
+
+# Errors
+
+If you encounter path problems, source the setenv.sh script at the root of the repo.
+If you have installed the software with the deployment script, it should have been added to the .bashrc file of the 4am user.

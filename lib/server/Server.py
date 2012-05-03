@@ -182,7 +182,7 @@ class Server(object):
       this is the port where the controller will be listenning to
 
     """
-    self.proc.append(subprocess.Popen(['./4am-controllerd', str(port), json.dumps(opts.opts)], stdout=sys.stdout, stderr=sys.stdout))
+    self.proc.append(subprocess.Popen(['4am-controllerd', str(port), json.dumps(opts.opts)], stdout=sys.stdout, stderr=sys.stdout))
 
   def run(self, portlist):
     """

@@ -1,7 +1,0 @@
-The python path should be set with the full path to the directory containing the jsonrpc implementation.
-
-It could be :
-PYTHONPATH=${PYTHONPATH}:../json-rpc/ ./demo_jrpcserver.py
-
-PYTHONPATH=${PYTHONPATH}:../json-rpc/ ./demo_jrpcclient.py
-

@@ -1,0 +1,21 @@
+[server]
+port = 2200
+debug = False
+
+[controller]
+port = 5000
+number = 1
+debug = False
+
+[database]
+ip = dev2.sx4it.com
+## The database port, usally 3306 for mysql and 5432 for Postgres
+port = 42162
+## postgresql or mysql
+controller = mysql
+## Database name
+name = sx4it
+## name of a user with rights on the database
+user = root
+pass = root
+

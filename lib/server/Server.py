@@ -20,7 +20,7 @@ from optparse import OptionParser
 opts = {}
 
 parser = OptionParser()
-parser.epilog = "Theses option are overwritting the default configuration file ('server.conf'), if no configuration file is present, the server need theses values to be set."
+parser.epilog = "Theses option are overwritting the default configuration file ('4am.conf'), if no configuration file is present, the server need theses values to be set."
 parser.add_option("-c", "--controler", dest="controller_number",
       help="number of controllers to launch", metavar="NB_CONTROLLER")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",

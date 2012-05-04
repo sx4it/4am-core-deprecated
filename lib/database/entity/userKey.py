@@ -7,14 +7,17 @@ class UserKey(Base):
     __tablename__ = 'userkey'
 
     id = Column(Integer, primary_key=True)
-    ukkey = Column(String(2048))
-    uktype = Column(String(255))
+    name = Column(String(55), nullable=False)
+    key = Column(String(2048), nullable=False)
+    type = Column(String(255), nullable=False)
+    detail = Column(String(255), nullable=True)
 
     # @ManyToOne : UserKey <--> User
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(String(255), ForeignKey('user.login'))
     user = relationship("User", backref="userkey")
 
-    def __init__(self, ukkey, uktype):
-        self.ukkey = ukkey
-        self.uktype = uktype
-
+    def __init__(self, name, key, type=None, detail=None):
+        self.name = name
+        self.key = key
+        self.type = type
+        self.detail = detail

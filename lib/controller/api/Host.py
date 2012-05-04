@@ -1,25 +1,25 @@
-'''
+"""
 Manipulation of the host representations
-'''
+"""
 
 import logging
 import traceback
-import StringIO # rmv when delete print
 from common.jsonrpc.call import Callable
 from controller.server import Server
-from database.entity import host
-from database.entity import hostKey
-from User import pprinttable
+from database.entity import host, hostKey
 import sys
 
 @Callable
 def add(*param, **dic):
-    '''
+    """
     We may need to think about the choice between hostname/ip.
 
     :hostkey:
-        The remote host key in the form of a base64 encoded string
-    '''
+    The remote host key in the form of a base64 encoded string
+    """
+    #Check if hostname already exist
+    if dic.get("hostname") is None:
+        return "No hostname given."
 
     if dic.get("ip") is None or dic.get("port") is None:
         return "Ip and port of the host must be given."
@@ -33,9 +33,6 @@ def add(*param, **dic):
          #FIXME: Need to be in the policy
         hostKeyType = 'ssh-rsa'
 
-    #Check if hostname already exist
-    if dic.get("hostname") is None:
-        return "No hostname given."
     try:
         host1 = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
         if host1:
@@ -62,7 +59,7 @@ def add(*param, **dic):
     return "%s has been successfully added!"%dic.get("hostname")
 
 @Callable
-def addKeyToHost(*param, **dic):
+def addKey(*param, **dic):
     """
     Add a key and keyType to the given host
     """
@@ -143,11 +140,7 @@ def list(*param, **dic):
     hosts = Server.instance().db._hostRequest.getAllHost()
     if not hosts:
         return "No host stored."
-    s = StringIO.StringIO()
-    tab = [("ip", "hostname", "port", "mgmtusername")]
-    for b in hosts:
-        tab.append((str(b.ip), b.hostname, b.port, b.mgmtusername))
-    return pprinttable(tab)
+    return hosts
 
 @Callable
 def getHost(*param, **dic):

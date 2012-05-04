@@ -33,8 +33,6 @@ class HostRequest():
         self._session.add(host)
         self._session.commit()
 
-
-
     # Add the given Host mapped object to the database
     def updateHost(self, host):
         self._session.update(host)

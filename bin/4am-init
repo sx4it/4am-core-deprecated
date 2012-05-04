@@ -7,6 +7,7 @@ from common.sx4itconf import Sx4itConf
 
 import database
 from optparse import OptionParser
+from sqlalchemy import exc
 
 parser = OptionParser()
 parser.add_option("-p", "--key-path", dest="key_path",
@@ -34,10 +35,13 @@ except Sx4itConf.UsageException as e:
   parser.print_help()
   sys.exit(1)
 
-firstname = os.getenv('USER')
-lastname = firstname
-mail = firstname + '@sx4it.com'
-password = firstname
+login = os.getenv('USER')
+firstname = "Sx4it" + login
+lastname = login  + "Sx4it"
+mail = login + '@sx4it.com'
+password = login
+keyname = login + "_laptop"
+keytype = "rsa"
 
 def loadkey(key):
   b = open(os.path.expanduser(key)).read().split()[1]
@@ -45,10 +49,15 @@ def loadkey(key):
 
 key = loadkey(Sx4itConf.opts["key_path"])
 
-user1 = user.User(firstname, lastname, mail, password)
-user1.userkey = [userKey.UserKey(key, 'type')]
+user1 = user.User(login, firstname, lastname, mail, password)
+user1.userkey = [userKey.UserKey(keyname, key, keytype)]
 
-if db_session._userRequest.addUser(user1) == True:
-  print "Succeed."
-else:
-  print "Failed !!! (userkey already in db ?)"
+try:
+  db_session._userRequest.addUser(user1)
+  print "User %s successfuly initiated."%login
+except exc.IntegrityError as e:
+        print "\nFAILURE => %s."%e.message
+except exc.SQLAlchemyError as err:
+  print "\nFAILURE => Failed to init with login %s: %s."%(login, err)
+except:
+  print "Unexpected error:", sys.exc_info()

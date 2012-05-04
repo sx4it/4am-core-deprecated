@@ -3,92 +3,112 @@ Manipulation of the user representations
 """
 
 import logging
-import pprint
-import StringIO # rmv when del print
 from common.jsonrpc.call import Callable
 from controller.server import Server
-from database.entity import user
-from database.entity import userKey
+from database.entity import user, userKey
 
-#TODO move to common api fct & delete later
-def pprinttable(rows):
-  out = StringIO.StringIO()
-  if len(rows) > 1:
-    headers = rows[0]
-    lens = []
-    for i in range(len(rows[0])):
-      lens.append(len(max([x[i] for x in rows] + [headers[i]],key=lambda x:len(str(x)))))
-    formats = []
-    hformats = []
-    for i in range(len(rows[0])):
-      if isinstance(rows[0][i], int):
-        formats.append("%%%dd" % lens[i])
-      else:
-        formats.append("%%-%ds" % lens[i])
-      hformats.append("%%-%ds" % lens[i])
-    pattern = " | ".join(formats)
-    hpattern = " | ".join(hformats)
-    separator = "-+-".join(['-' * n for n in lens])
-    print >> out, hpattern % tuple(headers)
-    print >> out, separator
-    for line in rows:
-      print >> out, pattern % tuple(line)
-  elif len(rows) == 1:
-    row = rows[0]
-    hwidth = len(max(row,key=lambda x: len(x)))
-    for i in range(len(row)):
-      print >> out, "%*s = %s" % (hwidth,row[i],row[i])
-  return out.getvalue()
+from ControllerException import *
+
+"""
+TODO:
+check existing keyname when adding
+"""
 
 @Callable
 def add(*param, **dic):
   """
-  api.add a new user in database
-
-  name = username
-  group = usergroup
-  return true if everything is ok :)
+  Add a new user in database, also add a key if given
   """
+  if dic.get("login") is None:
+    raise MissingArgumentError("login")
   if dic.get("firstname") is None:
-    return "No firstname given"
-  firstname = dic.get("firstname")
+    raise MissingArgumentError("fistname")
   if dic.get("lastname") is None:
-    return "No lastname given"
-  lastname = dic.get("lastname")
+    raise MissingArgumentError("lastname")
   if dic.get("email") is None:
-    return "No user email given"
-  email = dic.get("email")
+    raise MissingArgumentError("login")
   if dic.get("password") is None:
-    return "No user password given"
+    raise MissingArgumentError("password")
   password = dic.get("password")
-  user1 = user.User(firstname, lastname, email, password)
-  if dic.get("key") is not None:
-    user1.userkey = [userKey.UserKey(dic["key"], 'type')] # Add key if he gave one
-  if Server.instance().db._userRequest.addUser(user1) == True:
-    return True
-  return False
+  usr = user.User(dic.get("login"), dic.get("firstname"), dic.get("lastname"), dic.get("email"), password)
+
+  if dic.get("name") is not None and dic.get("key") is not None:
+    usr.userkey = [userKey.UserKey(dic.get["name"], dic.get["key"], dic.get["type"], dic.get["detail"])]
+  Server.instance().db._userRequest.addUser(usr)
+  return True
+
+@Callable
+def addKey(*param, **dic):
+  """
+  Add a key and kink it to a user
+  """
+  if dic.get("login") is None or dic.get("name") is None or dic.get("key") is None:
+    raise MissingArgumentError("requiere login, name and key")
+
+  usr = Server.instance().db._hostRequest.getUser(dic.get("login"))
+  usr.hostkey.append(hostKey.HostKey(dic.get["name"], dic.get["key"], dic.get["type"], dic.get["detail"]))
+  Server.instance().db._hostRequest.addHost(usr)
+  return True
 
 @Callable
 def delete(*param, **dic):
   """
-  User.delete [name=USERNAME]
+  Delete a user
   """
-  if dic.get("firstname") is None:
-    return "No firstname given"
-  firstname = dic.get("firstname")
-  try:
-    user = Server.instance().db._userRequest.getUserByName(firstname)
-  except:
-    return "%s cannot be delete."%firstname
-  if Server.instance().db._userRequest.removeUser(user):
-    return True
-  return "%s cannot be delete."%firstname
+  if dic.get("login") is None:
+    raise MissingArgumentError("login")
 
-  name = dic.get("name")
-  if name is None:
-    return delete.__doc__
-  return "%s has been delete !"%(name)
+  usr = Server.instance().db._userRequest.getUser(dic.get("login"))
+  Server.instance().db._userRequest.deleteUser(usr)
+  return True
 
+@Callable
+def list(*param, **dic):
+  """
+  Get a list of all user
+  """
+  usr = Server.instance().db._userRequest.getAllUser()
+  return usr
+
+@Callable
+def get(*param, **dic):
+  """
+  Get a user
+  """
+  if dic.get("login") is None:
+    raise MissingArgumentError("login")
+  usr = Server.instance().db._userRequest.getUser(dic.get("login"))
+  return usr
+
+@Callable
+def update(*param, **dic):
+  """
+  Update user's detail
+  login can't be changed
+  """
+  if len(dic) < 2:
+    raise MissingArgumentError("nothing to update")
+  if dic.get("login") is None:
+    raise MissingArgumentError("login")
+  usr = Server.instance().db._userRequest.getUser(dic.get("login"))
+
+  if dic.get("firstname") is not None:
+    usr.firstname = dic.get("firstname")
+  if dic.get("lastname") is not None:
+    usr.lastname = dic.get("lastname")
+  if dic.get("email") is not None:
+    usr.email = dic.get("email")
+  if dic.get("password") is not None:
+    usr.password = dic.get("password")
+  if dic.get("active") is not None:
+    usr.active = dic.get("active")
+  Server.instance().db._userRequest.addUser(usr)
+  return True
+
+
+
+
+#pourquoi cette fonction dans le controller?
 @Callable
 def checkPassFromUsername(*username, **dic):
   try:
@@ -98,38 +118,36 @@ def checkPassFromUsername(*username, **dic):
     if dic.get("password") is None:
       return False
     password = dic.get("password")
-    user = Server.instance().db._userRequest.getUserByName(user)
+    user = Server.instance().db._userRequest.getUser(user)
     if user.password == password:
       return True
   except : #TODO finaly ?
     return False
   return False
 
+#Idem, pour dans le controller?
 @Callable
 def getKeyFromUsername(*username, **dic):
   if dic.get("user") is None:
     return ""
   user = dic.get("user")
   try:
-    user = Server.instance().db._userRequest.getUserByName(user)
+    user = Server.instance().db._userRequest.getUser(user)
   except orm_exc.NoResultFound:
-    #FIXME: Not found results are not really an exception
-    return ""
+    #FIXME: Not found results are not really an exception++
+    return "%s not found"%user
+  except:
+    print "Critical error"
   if len(user.userkey) > 0:
-    keys = user.userkey[0].ukkey
+    keys = user.userkey[0].key
   else:
     return ""
   logging.debug("getKeyFromUsername-> %s", keys)
   return keys
 
 @Callable
-def list(*param, **dic):
+def updateKey(*param, **dic):
   """
-  api.list list all users
+  Update key's detail
   """
-  users = Server.instance().db._userRequest.getAllUser()
-  s = StringIO.StringIO()
-  tab = [("id", "firtname", "lastname", "email")]
-  for b in users:
-    tab.append((str(b.id), b.firstname, b.lastname, b.email))
-  return pprinttable(tab)
+  return "Not implemented... yet."

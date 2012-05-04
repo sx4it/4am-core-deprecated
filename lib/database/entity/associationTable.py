@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from sqlalchemy import Column, Integer, ForeignKey, Table, Text
+from sqlalchemy import Column, Integer, ForeignKey, Table, Text, String
 from sqlalchemy.orm import relationship, backref
 
 from database.base import Base
 
 # A ManyToMany association table between UserGroup and User
 userGroup_Has_User_Table = Table('usergroup_has_user', Base.metadata,
-                                 Column('user_id', Integer, ForeignKey('user.id')),
+                                 Column('user_id', String(255), ForeignKey('user.login')),
                                  Column('usergroup_id', Integer, ForeignKey('usergroup.id'))
                                  )
 
@@ -22,7 +22,7 @@ hostGroup_Has_Host_Table = Table('hostgroup_has_host', Base.metadata,
 # A ManyToMany association table between User, HostGroup and Rights
 class User_Has_HostGroup_With_Rights(Base):
     __tablename__ = 'user_has_hostgroup_with_rights'
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    user_id = Column(String(255), ForeignKey('user.login'), primary_key=True)
     hostgroup_id = Column(Integer, ForeignKey('hostgroup.id'), primary_key=True)
     rights_id = Column(Integer, ForeignKey('rights.id'), primary_key=True)
     hostgroup = relationship("HostGroup", backref="user_has_hostgroup_with_rights")
@@ -32,7 +32,7 @@ class User_Has_HostGroup_With_Rights(Base):
 # A ManyToMany association table between User, Host and Rights
 class User_Has_Host_With_Rights(Base):
     __tablename__ = 'user_has_host_with_rights'
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    user_id = Column(String(255), ForeignKey('user.login'), primary_key=True)
     host_id = Column(Integer, ForeignKey('host.id'), primary_key=True)
     rights_id = Column(Integer, ForeignKey('rights.id'), primary_key=True)
     host = relationship("Host", backref="user_has_host_with_rights")

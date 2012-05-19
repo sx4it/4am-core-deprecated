@@ -1,4 +1,79 @@
-#!/usr/bin/env python2.7
-import server
+#!/usr/bin/env python2.7 -tt
+# -*- coding: utf-8 -*-
+# Open Source Initiative OSI - The MIT License (MIT):Licensing
+#
+# The MIT License (MIT)
+# Copyright (c) 2012 sx4it (contact@sx4it.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-server.Server.run()
+from __future__ import print_function
+import logging
+import argparse
+import os
+import sys
+import ConfigParser
+
+import sshd
+from common import config
+
+parser = argparse.ArgumentParser(
+            description='Theses options are overwritting the default \
+                        configuration file ("~/4am.conf"). If no configuration \
+                        file is present, the server need theses values to be set.'
+           )
+parser.add_argument('-c', '--config', metavar='configfile',
+                    default='~/.4am.conf',
+                    help='An alternate path to the configuration file (default \
+                    to ~/.4am.conf)')
+parser.add_argument('--controller', metavar='controller_addr', nargs='+',
+                    help='specify the controllers address in the 0MQ format')
+parser.add_argument('-d', '--debug', action='store_true',
+                    help='activate debug mode', default=False)
+parser.add_argument('-p', '--port', metavar='port', type=int,
+                    help='the port of the server')
+parser.add_argument('-l', '--listen', metavar='address',
+                    help='the address to listen on')
+parser.add_argument('-k', '--key', metavar='key_file',
+                    help='the file containing the server private key')
+
+def main():
+    args = parser.parse_args()
+    cfg = config.AmConfigParser(args)
+    cfg.read(os.path.expanduser(args.config))
+    if cfg.getdebug():
+        logging.basicConfig(level=logging.DEBUG)
+    # set default
+    port = 2200
+    listen = ''
+    key = 'test_rsa.key'
+    try:
+        port = args.port or cfg.getint('sshd', 'port')
+        listen = args.listen or cfg.get('sshd', 'listen')
+        key = args.key or cfg.get('sshd', 'key')
+        controller = args.controller or [ cfg.get('controller', 'address') ]
+    except ConfigParser.NoOptionError as e:
+        print('An option is missing : "{0}"'.format(e), file=sys.stderr)
+        sys.exit(1)
+    server = sshd.core.Server.instance()
+    server.configure(listen, port, key, controller)
+    server.run()
+
+if __name__ == '__main__':
+    exit(main())

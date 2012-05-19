@@ -13,7 +13,7 @@ class sx4itsession(abstracthandler.Handler):
     context = zmq.Context()
     self.sock = context.socket(zmq.REQ)
     for port in portlist:
-      self.sock.connect("tcp://127.0.0.1:" + str(port)) #TODO use dynamic IP
+      self.sock.connect(port)
     self.poll.register(self.sock, flags=zmq.POLLIN)
   def _validate(self, str):
     self.sock.send(str) # forward to server via zmq

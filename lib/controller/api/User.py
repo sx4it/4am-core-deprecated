@@ -3,6 +3,7 @@ Manipulation of the user representations
 """
 
 import logging
+from sqlalchemy import orm
 from common.jsonrpc.call import Callable
 from controller.server import Server
 from database.entity import user, userKey
@@ -121,7 +122,7 @@ def checkPassFromUsername(*username, **dic):
     user = Server.instance().db._userRequest.getUser(user)
     if user.password == password:
       return True
-  except : #TODO finaly ?
+  except : #TODO finaly ? FIXME BAAAAAA CATCH ALL
     return False
   return False
 
@@ -133,11 +134,9 @@ def getKeyFromUsername(*username, **dic):
   user = dic.get("user")
   try:
     user = Server.instance().db._userRequest.getUser(user)
-  except orm_exc.NoResultFound:
+  except orm.exc.NoResultFound:
     #FIXME: Not found results are not really an exception++
-    return "%s not found"%user
-  except:
-    print "Critical error"
+    raise RuntimeError("{0} not found".format(user))
   if len(user.userkey) > 0:
     keys = user.userkey[0].key
   else:

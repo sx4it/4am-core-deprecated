@@ -7,12 +7,12 @@ class shell(abstracthandler.Handler):
   """
   This class is used to answer the openssh client, we listen on the **session** channel. And answer properly so that the user can have a pronpt.
   """
-  def __init__(self, chan, portlist):
+  def __init__(self, chan, ctl_addrs):
     super(shell, self).__init__(chan, portlist)
     context = zmq.Context()
     self.sock = context.socket(zmq.REQ)
-    for port in portlist:
-      self.sock.connect("tcp://127.0.0.1:" + str(port)) #TODO use dynamic IP
+    for port in ctl_addrs:
+      self.sock.connect(port) #TODO use dynamic IP
     self.poll.register(self.sock, flags=zmq.POLLIN)
     self.to_send = ["Hello ! Welcome to sx4it !\n", "$>"]
     print "Inside Shell :)"

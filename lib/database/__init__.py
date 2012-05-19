@@ -1,2 +1,2 @@
-from session import InitSession
+from session import Session
 

@@ -1,75 +1,94 @@
-"""
-Manipulation of the host representations
-"""
+# -*- coding: utf-8 -*-
+# Open Source Initiative OSI - The MIT License (MIT):Licensing
+#
+# The MIT License (MIT)
+# Copyright (c) 2012 sx4it (contact@sx4it.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
+import sys
 import logging
 import traceback
+import sqlalchemy 
+
 from common.jsonrpc.call import Callable
 from controller.server import Server
 from database.entity import host, hostKey
-import sys
+
+logger = logging.getLogger(__name__)
+
+class HostError(Exception):
+    """Base class for errors in the api.host package."""
 
 @Callable
-def add(*param, **dic):
-    """
+def add(name=None, ip=None, port=22, hostKey=None, hostKeyType=None, tpl=None):
+    '''
     We may need to think about the choice between hostname/ip.
 
     :hostkey:
     The remote host key in the form of a base64 encoded string
-    """
-    #Check if hostname already exist
-    if dic.get("hostname") is None:
-        return "No hostname given."
-
-    if dic.get("ip") is None or dic.get("port") is None:
-        return "Ip and port of the host must be given."
-    if dic.get("hostkey") is None: # FIXME: strict policy may require HostKey to be present
-        return "An hostKey must be given."
-    if dic.get("hostkeytype") is not None:
-        # FIXME: check if this is a correct type (policy...)
-        hostKeyType = dic.get("hostkeytype")
-        pass
-    else:
-         #FIXME: Need to be in the policy
-        hostKeyType = 'ssh-rsa'
-
+    '''
+    if name is None:
+        raise HostError('No hostname given.')
+    # Check if host already exist in the database
     try:
-        host1 = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
+        host1 = Server.instance().db._hostRequest.getHostByHostname(name)
         if host1:
-            return "%s already exist."%dic.get("hostname")
-    except:
-        return "ERROR => Failed to retrieve host %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
-
-#    try:
-#        remoteKey = Server.instance().rE.getRemoteHostKey(dic.get("ip"), dic.get("port"), hostKeyType)
-#    except:
-#        logging.debug(traceback.print_exc())
-#        raise RuntimeError('Connection KO') # FIXME: Raise a better error
-#    if dic.get("hostkey") is not None and dic.get("hostkey") != remoteKey:
-#        raise RuntimeError('Invalid key') # FIXME: Raise a better error
-#    Server.instance().rE.addRemoteHostKey(dic.get("ip"), hostKeyType, remoteKey)
-
-    # Add new host and his key in database
-    host1 = host.Host(dic.get("hostname"), dic.get("ip"), dic.get("port"), dic.get("mgmtusername"))
-    host1.hostKey = [hostKey.HostKey(dic.get("hostkey"), hostKeyType)]
+            raise HostError("{0} already exist.".format(name)) # FIXME: Raise a better error
+    except (sqlalchemy.exc.SQLAlchemyError, sqlalchemy.exc.InvalidRequestError): #FIXME: What do we except ?
+        logger.error(sys.exc_info()[1])
+        raise HostError("Failed to retrieve host {0}.".format(name)) # FIXME: Raise a better error
+    if HostKey is None: # FIXME: strict policy may require HostKey to be present
+        pass
     try:
-        Server.instance().db._hostRequest.addHost(host1)
-    except:
-        return "ERROR => Failed to add %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
-    return "%s has been successfully added!"%dic.get("hostname")
+        remoteKey = Server.instance().rE.getRemoteHostKey(ip, port, HostKeyType)
+    except: #FIXME: What do we except ?
+        logger.info(traceback.print_exc())
+        raise RuntimeError('Connection KO') # FIXME: Raise a better error and catch different type of exception
+    if HostKey is not None and HostKey != remoteKey:
+        raise RuntimeError('Invalid key') # FIXME: Raise a better error
+    Server.instance().rE.addRemoteHostKey(ip, HostKeyType, remoteKey)
+    return True
+    # Insert remoteKey in the database
+    mgmtusername = '4am' #FIXME: in policy
+    # Add new host and his key in database
+    host1 = host.Host(name, ip, port, mgmtusername)
+    host1.hostKey = [hostKey.HostKey(hostKey, hostKeyType)]
+    try:
+        Server.instance().db._hostRequest.addHost(host1) # FIXME : What happen if one of the insert request fails ? Are both request canceled ? #transaction ?
+    except: #FIXME: What do we except ?
+        logger.error("Failed to add host {0} details :\n".format(name, sys.exc_info()[1]))
+        raise RuntimeError("Failed to add host {0}.".format(name)) # FIXME: Raise a better error
+    return True # We should maybe return a kind of object representing the host
 
 @Callable
-def addKey(*param, **dic):
+def add_key(name=None, hostkey=None, hostkeytype=None):
     """
     Add a key and keyType to the given host
     """
-    if dic.get("hostname") is None or dic.get("hostkey") is None or dic.get("hostkeytype") is None:
-        return "All hostname, host key and key type must be given."
+    if name is None or hostkey is None or hostkeytype is None:
+        raise RuntimeError('Name, host key and key type must be given.') # FIXME: Raise a better error
     try:
-        host1 = Server.instance().db._hostRequest.getHostByHostname(dic.get("hostname"))
+        host1 = Server.instance().db._hostRequest.getHostByHostname(name)
         if not host1:
-            return "%s does not exist."%dic.get("hostname")
-        host1.hostkey.append(hostKey.HostKey(dic.get("hostkey"), dic.get("hostkeytype")))
+            raise RuntimeError("{0} does not exist.".format(name)) # FIXME: Raise a better error
+        host1.hostkey.append(hostKey.HostKey(hostkey), hostkeytype)
         Server.instance().db._hostRequest.addHost(host1)
     except:
         return "ERROR => Failed to add key to host %s: %s"%(dic.get("hostname"), sys.exc_info()[1])
@@ -92,7 +111,7 @@ def delete(*param, **dic):
     return "%s has been successfully deleted!"%dic.get("hostname")
 
 @Callable
-def deleteKey(*param, **dic):
+def delete_key(*param, **dic):
     """
     delete an hostkey using the given hostname and keyid
     """
@@ -143,7 +162,7 @@ def list(*param, **dic):
     return hosts
 
 @Callable
-def getHost(*param, **dic):
+def get_host(*param, **dic):
     """
     Get an Host from the given hostname
     """
@@ -159,14 +178,14 @@ def getHost(*param, **dic):
     return "Hostname: %s, Ip:%s, Port:%s"%(hostname, host.ip, host.port)
 
 @Callable
-def getHostFromKey(*param, **dic):
+def get_host_from_key(*param, **dic):
     """
     Get an Host from the given key
     """
     return "Not implemented... yet."
 
 @Callable
-def getKeysFromHostame(*param, **dic):
+def get_keys_from_hostame(*param, **dic):
     """
     Get all keys  associated to the given hostname
     """
@@ -184,4 +203,4 @@ def getKeysFromHostame(*param, **dic):
 #        cmd = 'adduser --system --force-badname --home /opt/4am/ --shell /bin/bash --disabled-password --create-home ' + mgmtUserName
 #        Server.instance().rE.cmdExec(ip, HostKeyType, remoteKey)
 #    # FIXME: apply policy
-
+    

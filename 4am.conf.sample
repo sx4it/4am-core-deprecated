@@ -1,18 +1,23 @@
-[server]
+[default]
+debug = True
+
+[sshd]
 port = 2200
-debug = False
+listen =
+key = test_rsa.key
 
 [controller]
-port = 5000
-number = 1
-debug = False
+address = ipc:///tmp/4am-controller0
+
+[remoteexecd]
+address = ipc:///tmp/remoteexecd0
 
 [database]
 ip = dev2.sx4it.com
 ## The database port, usally 3306 for mysql and 5432 for Postgres
 port = 42162
 ## postgresql or mysql
-controller = mysql
+driver = mysql
 ## Database name
 name = sx4it
 ## name of a user with rights on the database

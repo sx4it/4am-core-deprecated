@@ -3,13 +3,17 @@
 import zmq
 import inspect
 import logging
+import sqlalchemy.exc
 
 from common import *
 from common.jsonrpc import call
 import ast
 import api
 import database
-from remoteExecuter.proc import Proxy as rEProxy
+from remoteexecd.proc import Proxy as rEProxy
+
+class DatabaseError(Exception):
+    pass
 
 class Server:
     def __init__(self):
@@ -22,18 +26,25 @@ class Server:
         self.__socket = self.__context.socket(zmq.REP)
         self.__configured = False
 
-    def configure(self, port, databaseOpts):
+    def configure(self, addr, remoteaddr, database_url):
         '''
         Takes the port and the databaseOpts as parameter.
+
+        :database_url:
+            database address in the form
+            engine://user:pass@host:port/database
         '''
         if self.__configured == True:
             raise RuntimeError("Attempted to reconfigure an already configured instance.")
-        self.__port = port
-        self.__dbOpts = databaseOpts
-        self.__socket.bind("tcp://127.0.0.1:" + self.__port)
-        self.db = database.InitSession(self.__dbOpts)
+        self.__addr = addr
+        self.__socket.bind(addr)
+        try:
+            self.db = database.Session(database_url)
+        except sqlalchemy.exc.OperationalError as e:
+            raise DatabaseError('Error during the database initialization \
+"{0}".'.format(e))
         self.__configured = True
-        self.rE = rEProxy("tcp://127.0.0.1:" + str(int(self.__port) * 2))
+        self.rE = rEProxy(remoteaddr)
         return True
 
     @staticmethod
@@ -62,7 +73,7 @@ class Server:
         """
         if self.__configured != True:
             raise RuntimeError("Can not start an unconfigured Server instance.")
-        logging.debug("Launching server controller on port " + self.__port)
+        logging.debug("Launching server controller on port " + self.__addr)
         self.__run = True
         while self.__run:
             b = self.__socket.recv()
@@ -72,8 +83,8 @@ class Server:
                 member = getattr(api, name)
                 if inspect.ismodule(member):
                     reload(member)
-            logging.debug(self.__port + "___recv___ >> %s", b)
+            logging.debug(self.__addr + "___recv___ >> %s", b)
             res = call.processCall(b, api)
-            logging.debug(self.__port + "___job___ >> %s", res)
+            logging.debug(self.__addr + "___job___ >> %s", res)
             self.__socket.send(res)
 

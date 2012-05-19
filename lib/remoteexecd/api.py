@@ -6,7 +6,7 @@ import paramiko
 import socket
 import base64
 
-from remoteExecuter.server import Server
+from remoteexecd.server import Server
 from common.jsonrpc.call import Callable
 
 

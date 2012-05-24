@@ -29,7 +29,7 @@ cp 4am-core/4am.conf.sample ~/.4am.conf
 
 * Push your user public key with 4am-init
 ```
-4am-init --key-path id-mykey.pub
+4am-init --user YOU --key id-mykey.pub
 ```
 
 # Launching the server
